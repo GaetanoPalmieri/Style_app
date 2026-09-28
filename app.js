@@ -1,4 +1,4 @@
-const APP_VERSION='1.1.0';
+const APP_VERSION='1.1.1';
 const DB_NAME='style-wishlist-db';
 const DB_VERSION=1;
 const BACKUP_REMINDER_DAYS=30;
@@ -83,7 +83,7 @@ function revokePhotoUrls(){for(const url of state.photoUrls.values())URL.revokeO
 async function photoSrc(ref){if(!ref)return null;if(ref.type==='web')return ref.url;if(state.photoUrls.has(ref.id))return state.photoUrls.get(ref.id);const rec=await getOne('photos',ref.id);if(!rec?.blob)return null;const u=URL.createObjectURL(rec.blob);state.photoUrls.set(ref.id,u);return u}
 async function firstPhotoSrc(item){return photoSrc(item.photos?.[0])}
 
-function navRender(){document.getElementById('screen-title').textContent=TAB_TITLES[state.tab];document.querySelectorAll('#sidebar button').forEach(b=>b.classList.toggle('active',b.dataset.tab===state.tab));quickAdd.hidden=state.tab!=='wishlist'}
+function navRender(){document.getElementById('screen-title').textContent=TAB_TITLES[state.tab];document.querySelectorAll('#page-tabs button').forEach(b=>{const active=b.dataset.tab===state.tab;b.classList.toggle('active',active);if(active)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current')});quickAdd.hidden=state.tab!=='wishlist'}
 function yearOptions(){const y=new Date().getFullYear();const arr=[];for(let d=-1;d<=2;d++){const yr=y+d;arr.push(String(yr));arr.push(`${yr}/${String(yr+1).slice(-2)}`)}return [...new Set(arr)]}
 function yearDatalist(listId){return `<datalist id="${listId}">${yearOptions().map(y=>`<option value="${esc(y)}"></option>`).join('')}</datalist>`}
 function seasonToolbar(){return `<div class="toolbar"><select id="season-select" class="grow">${SEASONS.map(s=>`<option ${s===state.season?'selected':''}>${s}</option>`).join('')}</select><input id="year-input" list="year-toolbar-options" value="${esc(state.year)}" inputmode="text" aria-label="Anno o stagione" style="width:108px"></div>${yearDatalist('year-toolbar-options')}`}
@@ -244,7 +244,7 @@ function switchTab(tab,dir=0){
   }).catch(()=>{resetMainMotion();apply()});
 }
 let touch=null;main.addEventListener('touchstart',e=>{if(e.touches.length!==1||e.target.closest('button,input,select,textarea,a')){touch=null;return}touch={x:e.touches[0].clientX,y:e.touches[0].clientY}},{passive:true});main.addEventListener('touchend',e=>{if(!touch||!e.changedTouches.length)return;const dx=e.changedTouches[0].clientX-touch.x,dy=e.changedTouches[0].clientY-touch.y;touch=null;if(Math.abs(dx)<65||Math.abs(dx)<Math.abs(dy)*1.3)return;const idx=TABS.indexOf(state.tab),next=(idx+(dx<0?1:-1)+TABS.length)%TABS.length;switchTab(TABS[next],dx<0?1:-1)},{passive:true});
-document.querySelectorAll('#sidebar button').forEach(b=>b.onclick=()=>switchTab(b.dataset.tab));quickAdd.onclick=()=>openItemForm();sheet.addEventListener('click',e=>{if(e.target===sheet||e.target.closest?.('[data-close]'))sheet.close()});
+document.querySelectorAll('#page-tabs button').forEach(b=>b.onclick=()=>switchTab(b.dataset.tab));quickAdd.onclick=()=>openItemForm();sheet.addEventListener('click',e=>{if(e.target===sheet||e.target.closest?.('[data-close]'))sheet.close()});
 async function cleanupOrphanDraftPhotos(){for(const pid of state.draftPhotosNew){const usedElsewhere=state.items.some(i=>i.photos?.some(p=>p.id===pid));if(!usedElsewhere)await del('photos',pid)}state.draftPhotosNew=new Set()}
 sheet.addEventListener('close',()=>{const wasUnsavedItemForm=state.activeForm==='item'&&!state.formSaved;state.activeForm=null;if(wasUnsavedItemForm)cleanupOrphanDraftPhotos().catch(console.error)});
 

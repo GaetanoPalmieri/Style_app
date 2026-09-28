@@ -7,7 +7,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Style Wishlist" />
   <meta name="theme-color" content="#101318" />
-  <meta name="app-version" content="1.1.0" />
+  <meta name="app-version" content="1.1.1" />
   <meta name="description" content="Wishlist personale per stagione: abbigliamento, scarpe e accessori, con budget, storico acquisti e guardaroba. Funziona offline, i dati restano sul dispositivo." />
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="apple-touch-icon" href="apple-touch-icon.png" />
@@ -17,15 +17,6 @@
 </head>
 <body>
 <div id="shell">
-  <nav id="sidebar" aria-label="Sezioni">
-    <div class="sidebar-brand" aria-hidden="true">🧥</div>
-    <div class="sidebar-nav">
-      <button data-tab="wishlist" class="active"><span class="sidebar-icon" aria-hidden="true">🛍️</span><span>Wishlist</span></button>
-      <button data-tab="purchased"><span class="sidebar-icon" aria-hidden="true">✓</span><span>Acquistati</span></button>
-      <button data-tab="wardrobe"><span class="sidebar-icon" aria-hidden="true">👔</span><span>Guardaroba</span></button>
-      <button data-tab="more"><span class="sidebar-icon" aria-hidden="true">⚙️</span><span>Altro</span></button>
-    </div>
-  </nav>
   <div id="app">
     <header class="topbar">
       <div class="brandrow">
@@ -35,6 +26,12 @@
         </div>
         <button id="quick-add" class="iconbtn primary" aria-label="Aggiungi articolo">＋</button>
       </div>
+      <nav id="page-tabs" class="page-tabs" aria-label="Sezioni">
+        <button data-tab="wishlist" class="active" aria-current="page">Wishlist</button>
+        <button data-tab="purchased">Acquistati</button>
+        <button data-tab="wardrobe">Guardaroba</button>
+        <button data-tab="more">Altro</button>
+      </nav>
     </header>
     <main id="main" aria-live="polite"></main>
   </div>
