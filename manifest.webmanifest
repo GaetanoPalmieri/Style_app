@@ -2,13 +2,14 @@
   "name": "Style Wishlist",
   "short_name": "Style Wishlist",
   "description": "Wishlist stagionale per abbigliamento, scarpe e accessori.",
-  "start_url": "./index.html?v=101",
+  "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
   "background_color": "#101318",
   "theme_color": "#101318",
   "icons": [
-    {"src":"icon-192.png","sizes":"192x192","type":"image/png"},
-    {"src":"icon-512.png","sizes":"512x512","type":"image/png"}
+    {"src":"icon-192.png","sizes":"192x192","type":"image/png","purpose":"any"},
+    {"src":"icon-512.png","sizes":"512x512","type":"image/png","purpose":"any"},
+    {"src":"icon-512-maskable.png","sizes":"512x512","type":"image/png","purpose":"maskable"}
   ]
 }
