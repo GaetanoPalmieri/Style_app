@@ -81,7 +81,35 @@ async function exportBackup(){const photos=[];for(const rec of await getAll('pho
 backupInput.onchange=async()=>{const file=backupInput.files?.[0];backupInput.value='';if(!file)return;try{const data=JSON.parse(await file.text());if(!Array.isArray(data.items))throw new Error('Formato non valido');if(!confirm('Importare il backup? I dati attuali verranno sostituiti.'))return;const db=await openDB();for(const store of ['items','photos','settings'])await new Promise((res,rej)=>{const t=db.transaction(store,'readwrite');t.objectStore(store).clear();t.oncomplete=res;t.onerror=()=>rej(t.error)});for(const item of data.items)await put('items',item);for(const p of data.photos||[])await put('photos',{id:p.id,blob:await dataURLToBlob(p.data),createdAt:p.createdAt});state.budgets=data.budgets||{};await saveBudgets();revokePhotoUrls();await loadData();toast('Backup importato')}catch(e){console.error(e);toast('Backup non valido')}}
 async function clearAllData(){if(!confirm('Cancellare definitivamente tutti i dati di Style Wishlist?'))return;const db=await openDB();for(const store of ['items','photos','settings'])await new Promise((res,rej)=>{const t=db.transaction(store,'readwrite');t.objectStore(store).clear();t.oncomplete=res;t.onerror=()=>rej(t.error)});state.items=[];state.budgets={};revokePhotoUrls();render();toast('Dati cancellati')}
 
-function switchTab(tab,dir=0){if(!TABS.includes(tab)||tab===state.tab)return;const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;const apply=()=>{state.tab=tab;state.filter='Tutti';window.scrollTo(0,0);render()};if(reduce||!main.animate){apply();return}const sign=dir||Math.sign(TABS.indexOf(tab)-TABS.indexOf(state.tab))||1;const out=main.animate([{transform:'translateX(0)',opacity:1},{transform:`translateX(${sign>0?'-18%':'18%'})`,opacity:.12}],{duration:130,easing:'ease-in',fill:'forwards'});out.finished.catch(()=>{}).finally(()=>{apply();main.animate([{transform:`translateX(${sign>0?'18%':'-18%'})`,opacity:.12},{transform:'translateX(0)',opacity:1}],{duration:190,easing:'cubic-bezier(.2,.75,.25,1)'});})}
+function resetMainMotion(){
+  if(main.getAnimations) main.getAnimations().forEach(a=>a.cancel());
+  main.style.transform='none';
+  main.style.opacity='1';
+}
+function switchTab(tab,dir=0){
+  if(!TABS.includes(tab)||tab===state.tab)return;
+  const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const apply=()=>{state.tab=tab;state.filter='Tutti';window.scrollTo(0,0);render()};
+  resetMainMotion();
+  if(reduce||!main.animate){apply();return}
+  const sign=dir||Math.sign(TABS.indexOf(tab)-TABS.indexOf(state.tab))||1;
+  const out=main.animate(
+    [{transform:'translate3d(0,0,0)',opacity:1},{transform:`translate3d(${sign>0?'-7%':'7%'},0,0)`,opacity:.88}],
+    {duration:120,easing:'ease-in',fill:'none'}
+  );
+  out.finished.then(()=>{
+    out.cancel();
+    apply();
+    requestAnimationFrame(()=>{
+      resetMainMotion();
+      const incoming=main.animate(
+        [{transform:`translate3d(${sign>0?'7%':'-7%'},0,0)`,opacity:.88},{transform:'translate3d(0,0,0)',opacity:1}],
+        {duration:180,easing:'cubic-bezier(.2,.75,.25,1)',fill:'none'}
+      );
+      incoming.finished.catch(()=>{}).finally(()=>resetMainMotion());
+    });
+  }).catch(()=>{resetMainMotion();apply()});
+}
 let touch=null;main.addEventListener('touchstart',e=>{if(e.touches.length!==1||e.target.closest('button,input,select,textarea,a')){touch=null;return}touch={x:e.touches[0].clientX,y:e.touches[0].clientY}},{passive:true});main.addEventListener('touchend',e=>{if(!touch||!e.changedTouches.length)return;const dx=e.changedTouches[0].clientX-touch.x,dy=e.changedTouches[0].clientY-touch.y;touch=null;if(Math.abs(dx)<65||Math.abs(dx)<Math.abs(dy)*1.3)return;const idx=TABS.indexOf(state.tab),next=(idx+(dx<0?1:-1)+TABS.length)%TABS.length;switchTab(TABS[next],dx<0?1:-1)},{passive:true});
 document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>switchTab(b.dataset.tab));quickAdd.onclick=()=>openItemForm();sheet.addEventListener('click',e=>{if(e.target===sheet||e.target.closest?.('[data-close]'))sheet.close()});
 

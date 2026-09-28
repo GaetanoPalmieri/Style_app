@@ -14,3 +14,6 @@ Funzioni principali:
 - Navigazione a swipe e installazione "Aggiungi a Home"
 
 Pubblicare tutti i file su HTTPS. Per iPhone: aprire in Safari > Condividi > Aggiungi a Home.
+
+
+Versione 1.0.1: corretta transizione schede su Safari/iOS e reset sicuro di transform/opacity.

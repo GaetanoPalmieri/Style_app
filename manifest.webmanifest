@@ -2,7 +2,7 @@
   "name": "Style Wishlist",
   "short_name": "Style Wishlist",
   "description": "Wishlist stagionale per abbigliamento, scarpe e accessori.",
-  "start_url": "./index.html?v=100",
+  "start_url": "./index.html?v=101",
   "scope": "./",
   "display": "standalone",
   "background_color": "#101318",
