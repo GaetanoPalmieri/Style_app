@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Style Wishlist" />
+  <meta name="theme-color" content="#101318" />
+  <meta name="app-version" content="1.0.0" />
+  <link rel="manifest" href="manifest.webmanifest?v=100" />
+  <link rel="apple-touch-icon" href="apple-touch-icon.png?v=100" />
+  <link rel="icon" href="icon-32.png?v=100" />
+  <link rel="stylesheet" href="app.css?v=100" />
+  <title>Style Wishlist</title>
+</head>
+<body>
+<div id="app">
+  <header class="topbar">
+    <div class="brandrow">
+      <div>
+        <div class="eyebrow">STYLE WISHLIST</div>
+        <h1 id="screen-title">Wishlist</h1>
+      </div>
+      <button id="quick-add" class="iconbtn primary" aria-label="Aggiungi articolo">＋</button>
+    </div>
+    <nav class="tabs" aria-label="Sezioni">
+      <button data-tab="wishlist" class="active">Wishlist</button>
+      <button data-tab="purchased">Acquistati</button>
+      <button data-tab="wardrobe">Guardaroba</button>
+      <button data-tab="more">Altro</button>
+    </nav>
+  </header>
+  <main id="main" aria-live="polite"></main>
+</div>
+
+<dialog id="sheet"></dialog>
+<input id="gallery-input" type="file" accept="image/*" multiple hidden />
+<input id="camera-input" type="file" accept="image/*" capture="environment" hidden />
+<input id="backup-input" type="file" accept="application/json,.json" hidden />
+
+<script src="app.js?v=100"></script>
+</body>
+</html>
