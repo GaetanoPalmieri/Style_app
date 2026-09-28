@@ -51,3 +51,9 @@ Versione 1.1.0:
   proporzionali per le top categorie nelle Statistiche, toast e banner di aggiornamento che
   non si sovrappongono più se compaiono insieme, e stile di focus visibile per chi naviga da
   tastiera/trackpad.
+- Icone dell'app (home screen, manifest) con sfondo nero invece del blu notte precedente.
+- Corretto il riquadro budget: l'etichetta della stagione e il valore (o "Non impostato")
+  finivano sulla stessa riga senza separazione; ora sono impilati correttamente su due righe.
+- La barra di navigazione orizzontale in alto è stata sostituita da una sidebar fissa sulla
+  sinistra (icone + etichette per Wishlist, Acquistati, Guardaroba, Altro), sempre visibile.
+  Lo swipe orizzontale per cambiare sezione resta disponibile come prima.
