@@ -1,4 +1,4 @@
-STYLE WISHLIST v1.1.1
+STYLE WISHLIST v1.1.2
 
 PWA ottimizzata per iPhone/Safari.
 Funzioni principali:
@@ -59,7 +59,7 @@ Versione 1.1.0:
   Lo swipe orizzontale per cambiare sezione resta disponibile come prima.
 
 
-Versione 1.1.1:
+Versione 1.1.2:
 - Rimossa la barra di navigazione fissa in fondo.
 - I tab Wishlist, Acquistati, Guardaroba e Altro sono ora in una barra orizzontale sotto il titolo della pagina.
 - La barra superiore resta sticky durante lo scroll e il tab attivo e' evidenziato con una linea accentata.
