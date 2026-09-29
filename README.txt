@@ -1,10 +1,10 @@
-STYLE WISHLIST v1.1.2
+STYLE WISHLIST v1.2.0
 
 PWA ottimizzata per iPhone/Safari.
 Funzioni principali:
 - Wishlist per stagione e anno
 - Abbigliamento, scarpe e accessori
-- Foto da fotocamera, galleria o URL web
+- Foto wishlist da fotocamera o galleria; nel guardaroba anche da URL web
 - Salvataggio immagini e dati in IndexedDB
 - Priorità, taglia, colore, marca, negozio, prezzo, link e note
 - Stati: wishlist, ordinato, acquistato, scartato
@@ -65,3 +65,12 @@ Versione 1.1.2:
 - La barra superiore resta sticky durante lo scroll e il tab attivo e' evidenziato con una linea accentata.
 - Ridotto il padding inferiore dell'app, non piu' necessario per la vecchia navigazione bottom.
 - Aggiornata la cache del service worker per distribuire subito il nuovo layout.
+
+
+Versione 1.2.0:
+- Nel form Wishlist rimossa la modalita foto “Da web” con relativo campo URL/Aggiungi.
+- I pulsanti Annulla e Salva del form articolo sono ora in alto e restano visibili durante lo scroll.
+- Nei dettagli rimosso “Segna ordinato”; “Segna acquistato” diventa “Acquista”.
+- Il Guardaroba ora contiene sia gli acquisti sia articoli personali aggiunti manualmente.
+- Aggiunto flusso dedicato “Aggiungi al guardaroba” per capi gia posseduti, senza conteggiarli come acquisti.
+- Per gli articoli personali del guardaroba sono disponibili foto da fotocamera, galleria o URL web.
