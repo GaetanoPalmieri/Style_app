@@ -36,3 +36,30 @@ main{padding:10px 16px 0;min-height:60vh;will-change:transform,opacity;width:100
 .wardrobe-intro{display:flex;align-items:center;justify-content:space-between;gap:12px;background:linear-gradient(135deg,#1d242d,var(--panel));border:1px solid var(--line);border-radius:16px;padding:12px 13px;margin-bottom:10px}.wardrobe-intro>div{display:flex;flex-direction:column;gap:3px;min-width:0}.wardrobe-intro b{font-size:14px}.wardrobe-intro span{font-size:11px;color:var(--muted);line-height:1.3}.wardrobe-intro button{flex-shrink:0}.ownedlabel{margin-top:7px;font-size:11px;font-weight:800;color:var(--accent2)}.ownednote{background:rgba(127,183,168,.12);border:1px solid rgba(127,183,168,.25);color:#b9dfd5;border-radius:11px;padding:9px 10px;margin-bottom:10px;font-size:12px}
 @media(max-width:390px){.sheetformhead{align-items:flex-start}.sheetformhead h2{font-size:17px;padding-top:8px}.sheetformactions{gap:5px}.sheetformactions .ghostbtn,.sheetformactions .solidbtn{padding:8px 9px;font-size:11px}.wardrobe-intro{align-items:flex-start}.wardrobe-intro span{max-width:205px}.photoactions.two{grid-template-columns:1fr 1fr}}
 .purchasehint{background:rgba(215,181,109,.1);border:1px solid rgba(215,181,109,.24);color:#dec999;border-radius:11px;padding:10px 11px;font-size:12px;line-height:1.4}
+
+/* v1.2.1 — Review grafica */
+/* Riepilogo sempre su 3 colonne uguali, anche su iPhone. */
+@media(max-width:390px){.summary{grid-template-columns:repeat(3,minmax(0,1fr))!important}.summary .metric:last-child{grid-column:auto!important}.metric{padding:10px!important}.metric b{font-size:14px!important}}
+/* Stagione e anno: stessa altezza, stesso testo, allineati. */
+.toolbar select,.toolbar input{height:48px;min-height:48px;font-size:16px;line-height:1.2;padding:0 12px;box-sizing:border-box;-webkit-appearance:none;appearance:none}
+.toolbar select{background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);background-position:calc(100% - 18px) 21px,calc(100% - 13px) 21px;background-size:5px 5px;background-repeat:no-repeat;padding-right:32px}
+.toolbar #year-input{text-align:center}
+/* Testata ad altezza fissa: la barra delle schede non salta tra le sezioni. */
+#quick-add[hidden]{display:block!important;visibility:hidden;pointer-events:none}
+/* Filtri scorrevoli: spazio finale e sfumatura che indica che si può scorrere. */
+.filters::after{content:'';flex:0 0 6px}
+.filters{-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 28px),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 28px),transparent)}
+/* Ricerca e ordinamento coordinati; 16px evita lo zoom automatico di iOS. */
+.searchbar input,.searchbar select{font-size:16px!important;font-weight:500!important}
+/* Messaggi "vuoto" più discreti. */
+.empty{font-size:14px}
+.empty b{font-size:16px}
+
+/* v1.3.0 — Dialogo di conferma in-app */
+.ask-dialog{border:1px solid var(--line);border-radius:18px;background:var(--panel);color:var(--text);padding:22px 20px 16px;width:min(340px,calc(100vw - 40px));box-shadow:var(--shadow)}
+.ask-dialog::backdrop{background:rgba(6,8,12,.6);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
+.ask-dialog .ask-msg{margin:0 0 18px;font-size:16px;line-height:1.45}
+.ask-dialog .ask-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.ask-dialog button{min-height:46px;border-radius:12px;font:inherit;font-size:15px;font-weight:700;border:1px solid var(--line);background:var(--panel2);color:var(--text)}
+.ask-dialog .ask-ok{background:var(--accent);border-color:var(--accent);color:#2a210f}
+.ask-dialog .ask-ok.danger{background:var(--danger);border-color:var(--danger);color:#fff}

@@ -1,4 +1,4 @@
-const CACHE='style-wishlist-v5';
+const CACHE='style-wishlist-v7';
 const CORE=['./','./index.html','./app.css','./app.js','./manifest.webmanifest','./icon-192.png','./icon-512.png','./icon-512-maskable.png','./apple-touch-icon.png','./icon-32.png'];
 
 self.addEventListener('install',e=>{
@@ -27,8 +27,7 @@ self.addEventListener('fetch',e=>{
     // network-first per l'HTML, cosi' un deploy nuovo si vede appena c'e' rete
     e.respondWith(
       fetch(req).then(res=>{
-        const copy=res.clone();
-        caches.open(CACHE).then(c=>c.put('./index.html',copy));
+        if(res.ok){const copy=res.clone();caches.open(CACHE).then(c=>c.put('./index.html',copy));}
         return res;
       }).catch(()=>caches.match('./index.html'))
     );

@@ -74,3 +74,17 @@ Versione 1.2.0:
 - Il Guardaroba ora contiene sia gli acquisti sia articoli personali aggiunti manualmente.
 - Aggiunto flusso dedicato “Aggiungi al guardaroba” per capi gia posseduti, senza conteggiarli come acquisti.
 - Per gli articoli personali del guardaroba sono disponibili foto da fotocamera, galleria o URL web.
+
+
+Versione 1.2.1:
+- Riepilogo (Articoli/Wishlist/Acquistato) sempre su 3 colonne uguali.
+- Stagione e Anno con stessa altezza e allineamento.
+- Testata ad altezza fissa: le schede non saltano più tra Wishlist/Acquistati/Guardaroba/Altro.
+- Filtri scorrevoli con sfumatura finale; ricerca a 16px (niente zoom iOS).
+- Nuovo articolo: categoria da scegliere (non più T-shirt preimpostato).
+- Import backup in un'unica transazione: se fallisce, i dati attuali restano intatti.
+- Service worker: la pagina viene salvata in cache solo se la risposta è valida. Cache v6.
+
+
+Versione 1.3.0:
+- Conferme in-app (import backup, cancella tutti i dati) al posto dei popup del browser. Cache v7.
