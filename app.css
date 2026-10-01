@@ -1201,3 +1201,55 @@ main {
 .moredetails .field input {
   background: var(--panel);
 }
+
+/* v1.6.0 — Niente titolo in alto: il contenuto parte sotto la barra di stato; il "+" diventa un pulsante fluttuante. */
+.topbar {
+  position: static !important;
+  padding: env(safe-area-inset-top) 0 0 !important;
+  border-bottom: 0 !important;
+  background: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+.brandrow > div {
+  display: none !important;
+}
+.brandrow {
+  padding: 0 !important;
+  min-height: 0 !important;
+}
+main {
+  padding-top: 12px !important;
+}
+#quick-add {
+  position: fixed !important;
+  right: max(18px, calc((100vw - 560px) / 2 + 18px));
+  bottom: calc(80px + env(safe-area-inset-bottom));
+  width: 56px !important;
+  height: 56px !important;
+  border-radius: 18px !important;
+  font-size: 30px !important;
+  z-index: 55;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.45);
+}
+#quick-add[hidden] {
+  display: none !important;
+}
+#app::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: env(safe-area-inset-top);
+  background: var(--bg);
+  z-index: 50;
+  pointer-events: none;
+}
+.toast,
+.updatebanner {
+  bottom: calc(146px + env(safe-area-inset-bottom)) !important;
+}
+#app {
+  padding-bottom: calc(150px + env(safe-area-inset-bottom)) !important;
+}
