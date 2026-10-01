@@ -1,4 +1,4 @@
-const CACHE='style-wishlist-v7';
+const CACHE='style-wishlist-v8';
 const CORE=['./','./index.html','./app.css','./app.js','./manifest.webmanifest','./icon-192.png','./icon-512.png','./icon-512-maskable.png','./apple-touch-icon.png','./icon-32.png'];
 
 self.addEventListener('install',e=>{

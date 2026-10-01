@@ -7,7 +7,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Style Wishlist" />
   <meta name="theme-color" content="#101318" />
-  <meta name="app-version" content="1.3.0" />
+  <meta name="app-version" content="1.4.0" />
   <meta name="description" content="Wishlist personale per stagione: abbigliamento, scarpe e accessori, con budget, storico acquisti e guardaroba. Funziona offline, i dati restano sul dispositivo." />
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="apple-touch-icon" href="apple-touch-icon.png" />
@@ -26,14 +26,14 @@
         </div>
         <button id="quick-add" class="iconbtn primary" aria-label="Aggiungi articolo">＋</button>
       </div>
-      <nav id="page-tabs" class="page-tabs" aria-label="Sezioni">
-        <button data-tab="wishlist" class="active" aria-current="page">Wishlist</button>
-        <button data-tab="purchased">Acquistati</button>
-        <button data-tab="wardrobe">Guardaroba</button>
-        <button data-tab="more">Altro</button>
-      </nav>
     </header>
     <main id="main" aria-live="polite"></main>
+    <nav id="page-tabs" class="tabbar-bottom" aria-label="Sezioni">
+      <button data-tab="wishlist" class="tab active" aria-current="page"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 017-2.6A4 4 0 0119 10c0 5.6-7 10-7 10z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg><span>Wishlist</span></button>
+      <button data-tab="purchased" class="tab"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M5 8h14l-1 12H6L5 8zM9 8V6a3 3 0 016 0v2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/></svg><span>Acquistati</span></button>
+      <button data-tab="wardrobe" class="tab"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M12 7a2 2 0 112-2M12 7v1.5L3.5 15a1.5 1.5 0 001 2.7h15a1.5 1.5 0 001-2.7L12 8.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Guardaroba</span></button>
+      <button data-tab="more" class="tab"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><circle cx="5" cy="12" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="19" cy="12" r="1.6" fill="currentColor"/></svg><span>Altro</span></button>
+    </nav>
   </div>
 </div>
 
