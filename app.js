@@ -1,4 +1,4 @@
-const APP_VERSION = '1.6.0';
+const APP_VERSION = '1.7.0';
 const DB_NAME = 'style-wishlist-db';
 const DB_VERSION = 1;
 const BACKUP_REMINDER_DAYS = 30;
@@ -1106,3 +1106,94 @@ loadData().catch((e) => {
   console.error(e);
   main.innerHTML = '<div class="empty">Errore durante il caricamento dei dati locali.</div>';
 });
+
+/* Pannelli (dialog): si chiudono con uno swipe verso il basso o verso destra.
+   Il pannello segue il dito; sotto la soglia torna al suo posto. */
+(function () {
+  let g = null;
+  const SKIP = 'input,textarea,select,[contenteditable="true"],canvas,svg,.no-swipe';
+  function scroller(d, t) {
+    for (let n = t; n && n !== d.parentElement; n = n.parentElement) {
+      if (n.scrollHeight > n.clientHeight + 2) {
+        const oy = getComputedStyle(n).overflowY;
+        if (oy === 'auto' || oy === 'scroll') return n;
+      }
+    }
+    return null;
+  }
+  function canScrollLeft(d, t) {
+    for (let n = t; n && n !== d.parentElement; n = n.parentElement) {
+      if (n.scrollWidth > n.clientWidth + 2 && n.scrollLeft > 0) {
+        const ox = getComputedStyle(n).overflowX;
+        if (ox === 'auto' || ox === 'scroll') return true;
+      }
+    }
+    return false;
+  }
+  document.addEventListener('touchstart', (e) => {
+    g = null;
+    const d = e.target.closest && e.target.closest('dialog[open]');
+    if (!d || e.touches.length !== 1) return;
+    const t = e.touches[0];
+    const sc = scroller(d, e.target);
+    g = { d, x: t.clientX, y: t.clientY, lx: t.clientX, ly: t.clientY, lt: performance.now(), v: 0, axis: null, dead: false,
+      top: !sc || sc.scrollTop <= 1, canX: !e.target.closest(SKIP) && !canScrollLeft(d, e.target) };
+  }, { passive: true });
+  document.addEventListener('touchmove', (e) => {
+    if (!g || g.dead) return;
+    const t = e.touches[0], dx = t.clientX - g.x, dy = t.clientY - g.y;
+    if (!g.axis) {
+      if (g.canX && dx > 12 && dx > Math.abs(dy) * 1.3) g.axis = 'x';
+      else if (g.top && dy > 10 && dy > Math.abs(dx) * 1.2) g.axis = 'y';
+      else if (Math.abs(dx) > 12 || Math.abs(dy) > 12) { g.dead = true; return; }
+      else return;
+      g.d.style.transition = 'none';
+    }
+    e.preventDefault();
+    const now = performance.now();
+    g.v = (g.axis === 'x' ? t.clientX - g.lx : t.clientY - g.ly) / Math.max(1, now - g.lt);
+    g.lx = t.clientX; g.ly = t.clientY; g.lt = now;
+    const d = Math.max(0, g.axis === 'x' ? dx : dy);
+    g.d.style.transform = g.axis === 'x' ? `translateX(${d}px)` : `translateY(${d}px)`;
+    g.d.style.opacity = String(1 - Math.min(d, 400) / 900);
+  }, { passive: false });
+  function end(e) {
+    if (!g) return;
+    const s = g; g = null;
+    if (!s.axis) return;
+    const t = e.changedTouches && e.changedTouches[0];
+    const d = t ? (s.axis === 'x' ? t.clientX - s.x : t.clientY - s.y) : 0;
+    s.d.style.transition = 'transform .2s cubic-bezier(.2,.8,.2,1), opacity .2s ease';
+    const stop = (ev) => { ev.stopPropagation(); ev.preventDefault(); };
+    document.addEventListener('click', stop, true);
+    setTimeout(() => document.removeEventListener('click', stop, true), 350);
+    if (d > 90 || (s.v > 0.5 && d > 36)) {
+      s.d.style.transform = s.axis === 'x' ? 'translateX(110%)' : 'translateY(110%)';
+      s.d.style.opacity = '0';
+      setTimeout(() => {
+        document.removeEventListener('click', stop, true);
+        // Usa lo stesso percorso di chiusura del pulsante ✕, se c'è.
+        const btn = s.d.querySelector('[data-close], .ask-cancel');
+        if (btn) btn.click(); else s.d.close();
+        if (s.d.open) s.d.close();
+        s.d.style.transition = ''; s.d.style.transform = ''; s.d.style.opacity = '';
+      }, 190);
+    } else {
+      s.d.style.transform = ''; s.d.style.opacity = '';
+      setTimeout(() => { s.d.style.transition = ''; }, 220);
+    }
+  }
+  document.addEventListener('touchend', end, { passive: true });
+  document.addEventListener('touchcancel', end, { passive: true });
+})();
+
+/* La copertura della barra di stato appare solo quando si scorre (niente stacco in cima). */
+(function () {
+  // Lo scorrimento può avvenire sulla finestra o sul body (html/body con overflow-x nascosto).
+  const upd = () => {
+    const y = Math.max(window.scrollY || 0, document.body ? document.body.scrollTop : 0, document.documentElement.scrollTop || 0);
+    document.documentElement.classList.toggle('is-scrolled', y > 4);
+  };
+  document.addEventListener('scroll', upd, { passive: true, capture: true });
+  upd();
+})();

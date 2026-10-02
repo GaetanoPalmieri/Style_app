@@ -1253,3 +1253,86 @@ main {
 #app {
   padding-bottom: calc(150px + env(safe-area-inset-bottom)) !important;
 }
+
+/* =========================================================
+   v1.7.0 — Estetica moderna (come Bilancio): sfondo con bagliori,
+   superfici in vetro, accenti con gradiente, barra in basso fluttuante.
+   ========================================================= */
+:root{
+  --glass-card:rgba(23,28,35,.62);
+  --glass-strong:rgba(23,28,35,.78);
+  --glass-edge:rgba(255,255,255,.07);
+  --glass-shadow:0 12px 30px -14px rgba(0,0,0,.6);
+  --gold-grad:linear-gradient(145deg,#ecd08e,#c99a45);
+  --teal-grad:linear-gradient(135deg,#93cfbf,#4f9a87);
+}
+html{background:var(--bg)!important;}
+body{background:transparent!important;}
+body::before{content:"";position:fixed;inset:-10vh -10vw;z-index:-1;pointer-events:none;
+  background:
+    radial-gradient(42% 30% at 10% 6%,rgba(215,181,109,.16),transparent 70%),
+    radial-gradient(38% 30% at 96% 34%,rgba(127,183,168,.15),transparent 70%),
+    radial-gradient(46% 34% at 26% 90%,rgba(150,120,210,.13),transparent 72%),
+    var(--bg);}
+#app,main{background:transparent!important;}
+
+/* Barra di stato: copertura sfumata, visibile solo quando si scorre */
+#app::before{height:calc(env(safe-area-inset-top) + 14px)!important;background:rgba(16,19,24,.86)!important;
+  -webkit-mask-image:linear-gradient(to bottom,#000 calc(100% - 14px),transparent);mask-image:linear-gradient(to bottom,#000 calc(100% - 14px),transparent);transition:opacity .2s ease;}
+html:not(.is-scrolled) #app::before{opacity:0;}
+
+/* Superfici in vetro */
+.metric,.morecard,.empty,.wardrobe-intro,.itemcard,.detailbox{
+  background:var(--glass-card)!important;border:1px solid var(--glass-edge)!important;box-shadow:var(--glass-shadow)!important;border-radius:18px!important;}
+.metric,.morecard,.wardrobe-intro{-webkit-backdrop-filter:blur(14px) saturate(1.5);backdrop-filter:blur(14px) saturate(1.5);}
+.empty{border-style:solid!important;}
+.budgetcard{background:radial-gradient(120% 100% at 0% 0%,rgba(215,181,109,.22),transparent 62%),var(--glass-card)!important;
+  border:1px solid rgba(215,181,109,.32)!important;border-radius:18px!important;box-shadow:0 16px 36px -20px rgba(215,181,109,.5),var(--glass-shadow)!important;
+  -webkit-backdrop-filter:blur(14px) saturate(1.5);backdrop-filter:blur(14px) saturate(1.5);}
+.metric.accent{background:radial-gradient(120% 100% at 0% 0%,rgba(215,181,109,.16),transparent 65%),var(--glass-card)!important;}
+.itemcard .thumb{background:linear-gradient(145deg,rgba(40,48,60,.8),rgba(20,25,32,.8))!important;}
+.itemcard:active,.metric:active,.morecard:active{transform:scale(.98);}
+
+/* Campi e menu: senza bordo, traslucidi */
+.searchbar input,#search-input,#year-input,select,.sortselect,input[type="text"],input[type="search"],input[type="number"],input[type="url"],textarea{
+  background:rgba(255,255,255,.06)!important;border:1px solid transparent!important;border-radius:14px!important;}
+.searchbar input:focus,select:focus,input:focus,textarea:focus{border-color:rgba(215,181,109,.55)!important;}
+
+/* Filtri a pillola */
+.filters button{background:rgba(255,255,255,.06)!important;border:1px solid var(--glass-edge)!important;color:var(--muted)!important;
+  -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);transition:transform .15s ease;}
+.filters button:active{transform:scale(.95);}
+.filters button.active{background:var(--teal-grad)!important;border-color:transparent!important;color:#0d1f1a!important;
+  box-shadow:0 6px 16px -6px rgba(127,183,168,.75),inset 0 1px 0 rgba(255,255,255,.25)!important;}
+
+/* Pulsanti */
+.solidbtn{background:var(--gold-grad)!important;border:0!important;color:#2a1d05!important;
+  box-shadow:0 8px 20px -8px rgba(215,181,109,.7),inset 0 1px 0 rgba(255,255,255,.3)!important;}
+.ghostbtn{background:rgba(255,255,255,.06)!important;border:1px solid var(--glass-edge)!important;}
+.solidbtn:active,.ghostbtn:active,.dangerbtn:active{transform:scale(.97);}
+#quick-add{background:var(--gold-grad)!important;color:#2a1d05!important;border:0!important;border-radius:20px!important;
+  bottom:calc(96px + env(safe-area-inset-bottom))!important;
+  box-shadow:0 14px 30px -8px rgba(215,181,109,.65),inset 0 1px 0 rgba(255,255,255,.35)!important;}
+#quick-add:active{transform:scale(.94);}
+
+/* Barra di navigazione fluttuante in vetro */
+.tabbar-bottom{left:12px!important;right:12px!important;bottom:calc(8px + env(safe-area-inset-bottom))!important;max-width:536px!important;
+  padding:6px!important;border-radius:24px!important;border:1px solid var(--glass-edge)!important;
+  background:rgba(23,28,35,.58)!important;-webkit-backdrop-filter:saturate(1.8) blur(24px);backdrop-filter:saturate(1.8) blur(24px);
+  box-shadow:0 14px 36px -10px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.06)!important;}
+.tabbar-bottom .tab{border-radius:18px!important;}
+.tabbar-bottom .tab:active{transform:scale(.94);}
+.tabbar-bottom .tab.active{background:var(--gold-grad)!important;color:#2a1d05!important;
+  box-shadow:0 8px 20px -8px rgba(215,181,109,.8),inset 0 1px 0 rgba(255,255,255,.3)!important;}
+#app{padding-bottom:calc(160px + env(safe-area-inset-bottom))!important;}
+.toast,.updatebanner{bottom:calc(166px + env(safe-area-inset-bottom))!important;}
+
+/* Pannelli: vetro smerigliato, sfondo sfocato */
+#sheet::backdrop{background:rgba(5,8,12,.55)!important;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);}
+.sheetinner{background:rgba(23,28,35,.84)!important;border:1px solid var(--glass-edge)!important;border-bottom:0!important;border-radius:26px 26px 0 0!important;
+  -webkit-backdrop-filter:blur(26px) saturate(1.6);backdrop-filter:blur(26px) saturate(1.6);box-shadow:0 -16px 40px -12px rgba(0,0,0,.5);}
+#sheet{border-radius:26px 26px 0 0!important;}
+.sheetgrab{background:rgba(255,255,255,.25)!important;}
+.ask-dialog{background:rgba(23,28,35,.88)!important;border:1px solid var(--glass-edge)!important;border-radius:22px!important;
+  -webkit-backdrop-filter:blur(26px) saturate(1.6);backdrop-filter:blur(26px) saturate(1.6);}
+.ask-dialog::backdrop{-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);}

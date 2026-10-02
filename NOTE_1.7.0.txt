@@ -1,0 +1,7 @@
+Style Wishlist 1.7.0 — estetica moderna come Bilancio
+- Sfondo con bagliori colorati, card articoli e riquadri in vetro con trasparenze.
+- Barra in basso fluttuante in vetro, scheda attiva con gradiente oro e alone.
+- Pulsanti principali e "+" con gradiente oro; filtro attivo con gradiente verde; campi senza bordo.
+- Barra di stato: nessuno stacco in cima, copertura sfumata solo quando si scorre.
+- Pannelli: vetro smerigliato con sfondo sfocato; si chiudono anche con swipe verso il basso o verso destra.
+Installazione: copiare i file sopra quelli esistenti (le icone restano quelle già presenti).
