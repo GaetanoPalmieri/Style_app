@@ -1,0 +1,8 @@
+Style Wishlist 1.8.0 — stile comune alle 4 app
+
+- Stessi colori di Bilancio, Noi Due e RecompApp: fondo, vetro, bagliori.
+- Pulsanti principali e "+" con il gradiente ambra; scheda attiva e filtri attivi in verde (prima oro).
+- Tema chiaro e scuro: Altro › Aspetto (Sistema, Chiaro, Scuro). Sistema segue il telefono.
+- Popup centrale "Nuova versione disponibile" con "Più tardi" e "Aggiorna" al posto della barra in basso.
+- Corretto un errore all'avvio quando il service worker non è disponibile (es. navigazione privata).
+- Nuovi file: suite.js e suite.css (vanno caricati insieme agli altri).

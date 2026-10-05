@@ -1,0 +1,216 @@
+/* =========================================================
+   Stile comune delle app (Bilancio, Noi Due, RecompApp, Style)
+   Stessi colori, stessi accenti e stesso selettore del tema.
+   Il tema chiaro più sotto è generato dai colori del tema scuro
+   e poi rifinito a mano.
+   ========================================================= */
+:root{color-scheme:dark;}
+:root[data-theme="light"]{color-scheme:light;}
+.suite-seg{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;padding:4px;margin-top:8px;border-radius:14px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.07);}
+.suite-seg-opt{display:flex!important;align-items:center;justify-content:center;gap:6px;min-height:40px!important;padding:6px 4px!important;border:0!important;border-radius:11px!important;background:transparent!important;color:inherit;font-weight:700;font-size:14px;box-shadow:none!important;}
+.suite-seg-opt.active{background:linear-gradient(135deg,#3fb38e,#1f7a62)!important;color:#fff!important;box-shadow:0 6px 16px -6px rgba(58,166,132,.75),inset 0 1px 0 rgba(255,255,255,.22)!important;}
+.suite-theme-hint{margin:8px 0 0!important;font-size:12px!important;}
+:root[data-theme="light"] .suite-seg{background:rgba(20,24,26,.05);border-color:rgba(20,24,26,.08);}
+/* Popup "Nuova versione disponibile" (come Bilancio e Noi Due) */
+.app-update-modal{position:fixed;inset:0;z-index:1000;display:grid;place-items:center;padding:24px;background:rgba(8,12,16,.45);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);opacity:0;pointer-events:none;transition:opacity .2s ease;}
+.app-update-modal.show{opacity:1;pointer-events:auto;}
+.app-update-card{width:min(340px,100%);padding:22px 20px 18px;border-radius:22px;text-align:center;background:rgba(27,35,44,.86);color:#f1f5f4;border:1px solid rgba(255,255,255,.07);box-shadow:0 24px 60px rgba(0,0,0,.35);-webkit-backdrop-filter:blur(20px) saturate(1.5);backdrop-filter:blur(20px) saturate(1.5);transform:scale(.96);transition:transform .2s ease;}
+.app-update-modal.show .app-update-card{transform:none;}
+.app-update-icon{width:46px;height:46px;margin:0 auto 10px;border-radius:50%;display:grid;place-items:center;font-size:22px;font-weight:800;background:rgba(85,195,167,.18);color:#55c3a7;}
+.app-update-card h3{margin:0 0 6px;font-size:18px;}
+.app-update-card p{margin:0 0 16px;font-size:14px;line-height:1.45;color:#9fb0ab;}
+.app-update-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.app-update-card button{min-height:44px;border-radius:14px;font:inherit;font-weight:700;font-size:15px;border:1px solid rgba(255,255,255,.1);background:transparent;color:inherit;}
+.app-update-card .app-update-now{border:0;background:linear-gradient(145deg,#f7c463,#e48d24);color:#241800;}
+:root[data-theme="light"] .app-update-modal{background:rgba(20,24,26,.28);}
+:root[data-theme="light"] .app-update-card{background:rgba(255,255,255,.9);color:#14181a;border-color:rgba(20,24,26,.08);box-shadow:0 24px 60px rgba(20,24,26,.18);}
+:root[data-theme="light"] .app-update-card p{color:#4b5450;}
+:root[data-theme="light"] .app-update-icon{background:rgba(31,93,76,.12);color:#1f5d4c;}
+:root[data-theme="light"] .app-update-card button{border-color:rgba(20,24,26,.12);}
+@media (prefers-reduced-motion:reduce){.app-update-modal,.app-update-card{transition:none;}}
+/* Sincronizzazione online: scheda in Altro (uguale nelle 4 app) */
+.suite-sync-card .suite-sync-status{display:flex;gap:8px;align-items:flex-start;margin:6px 0 10px;font-size:13px;line-height:1.45;opacity:.85;}
+.suite-sync-dot{flex:0 0 auto;width:9px;height:9px;margin-top:4px;border-radius:50%;background:#9fb0ab;}
+.suite-sync-dot.on{background:#3fb38e;box-shadow:0 0 0 3px rgba(63,179,142,.2);}
+.suite-sync-dot.err{background:#e5584f;}
+.suite-sync-dot.busy{background:#e8a33d;animation:suiteSyncPulse 1s ease-in-out infinite;}
+@keyframes suiteSyncPulse{50%{opacity:.35;}}
+.suite-sync-form{display:grid;gap:8px;}
+.suite-sync-form input{width:100%;min-height:44px;padding:10px 12px;border-radius:12px;border:1px solid rgba(127,140,150,.28);background:rgba(127,140,150,.1);color:inherit;font:inherit;font-size:16px;box-sizing:border-box;}
+.suite-sync-actions{display:grid;grid-template-columns:1fr auto;gap:8px;}
+.suite-sync-card button{min-height:44px;padding:8px 14px;border-radius:12px;border:1px solid rgba(127,140,150,.3);background:transparent;color:inherit;font:inherit;font-weight:700;font-size:15px;}
+.suite-sync-card .suite-sync-primary{border:0;background:linear-gradient(145deg,#f7c463,#e48d24);color:#241800;box-shadow:0 8px 20px -8px rgba(232,147,44,.6);}
+.suite-sync-card button:disabled{opacity:.6;}
+#main .suite-sync-card .suite-sync-status,.suite-sync-card p.suite-sync-status{font-size:13px!important;line-height:1.45!important;margin:6px 0 10px!important;}
+#main .suite-sync-card button.suite-sync-primary,.suite-sync-card button.suite-sync-primary{background:linear-gradient(145deg,#f7c463,#e48d24)!important;color:#241800!important;border:0!important;box-shadow:0 8px 20px -8px rgba(232,147,44,.6)!important;}
+#main .suite-sync-card .suite-sync-actions{display:grid!important;grid-template-columns:1fr auto!important;gap:8px!important;}
+#main .suite-sync-card .suite-sync-actions button{width:100%;margin:0!important;}
+#main .suite-sync-form input{background:rgba(127,140,150,.1)!important;border:1px solid rgba(127,140,150,.28)!important;border-radius:12px!important;}
+/* --- Allineamento --- */
+/* Allineamento a Bilancio / Noi Due / RecompApp: stessi fondi, accento ambra per le azioni,
+   verde per le selezioni e la scheda attiva (prima oro). */
+:root{
+  --bg:#12181f;--panel:#1b232c;--panel2:#222d38;--line:#2b3640;--text:#f1f5f4;--muted:#9fb0ab;
+  --accent:#e8a33d;--accent2:#3aa684;--danger:#e5584f;--ok:#55c3a7;
+  --glass-card:rgba(27,35,44,.62);--glass-strong:rgba(27,35,44,.78);
+  --gold-grad:linear-gradient(145deg,#f7c463,#e48d24);--teal-grad:linear-gradient(135deg,#3fb38e,#1f7a62);
+}
+body::before{background:
+    radial-gradient(42% 30% at 10% 6%,rgba(232,163,61,.14),transparent 70%),
+    radial-gradient(38% 30% at 96% 34%,rgba(58,166,132,.18),transparent 70%),
+    radial-gradient(46% 34% at 26% 90%,rgba(110,120,230,.13),transparent 72%),
+    var(--bg)!important;}
+#app::before{background:rgba(18,24,31,.86)!important;}
+.tabbar-bottom{background:rgba(27,35,44,.58)!important;}
+.tabbar-bottom .tab.active{background:var(--teal-grad)!important;color:#fff!important;box-shadow:0 8px 20px -8px rgba(58,166,132,.8),inset 0 1px 0 rgba(255,255,255,.22)!important;}
+.solidbtn,#quick-add{color:#241800!important;box-shadow:0 8px 20px -8px rgba(232,147,44,.75),inset 0 1px 0 rgba(255,255,255,.3)!important;}
+#quick-add{box-shadow:0 14px 30px -8px rgba(232,147,44,.65),inset 0 1px 0 rgba(255,255,255,.35)!important;}
+.filters button.active{background:var(--teal-grad)!important;color:#fff!important;box-shadow:0 6px 16px -6px rgba(58,166,132,.75),inset 0 1px 0 rgba(255,255,255,.22)!important;}
+.budgetcard{background:radial-gradient(120% 100% at 0% 0%,rgba(232,163,61,.2),transparent 62%),var(--glass-card)!important;border-color:rgba(232,163,61,.32)!important;box-shadow:0 16px 36px -20px rgba(232,163,61,.5),var(--glass-shadow)!important;}
+.metric.accent{background:radial-gradient(120% 100% at 0% 0%,rgba(232,163,61,.14),transparent 65%),var(--glass-card)!important;}
+.searchbar input:focus,select:focus,input:focus,textarea:focus{border-color:rgba(232,163,61,.55)!important;}
+.sheetinner{background:rgba(27,35,44,.84)!important;}
+.ask-dialog{background:rgba(27,35,44,.88)!important;}
+.updatebanner{display:none!important;}
+/* --- Tema chiaro (generato dai colori del tema scuro) --- */
+:root:where([data-theme="light"]){--bg:#f0f2f5;--panel:#eceff2;--panel2:#e7eaef;--line:#ccd0d5;--text:#101318;--muted:#525f6d;--accent:#d7b56d;--accent2:#7fb7a8;--danger:#e76a64;--ok:#65c18c;--shadow:0 14px 34px rgba(20,24,26,0.09)}
+:where(:root[data-theme="light"]) :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+html:where([data-theme="light"]),:where(:root[data-theme="light"]) body{background:var(--bg);color:var(--text)}
+:where(:root[data-theme="light"]) .topbar{background:linear-gradient(180deg, var(--bg) 0%, rgba(255,255,255,0.92) 88%, rgba(255,255,255,0.92) 100%);border-bottom:1px solid rgba(204,208,213,0.72)}
+:where(:root[data-theme="light"]) .eyebrow{color:var(--accent)}
+:where(:root[data-theme="light"]) .iconbtn{border:none;background:var(--panel2);color:var(--text)}
+:where(:root[data-theme="light"]) .iconbtn.primary{background:var(--accent);color:#2a210f}
+:where(:root[data-theme="light"]) .page-tabs button{border:0;background:transparent;color:var(--muted)}
+:where(:root[data-theme="light"]) .page-tabs button::after{background:transparent}
+:where(:root[data-theme="light"]) .page-tabs button.active{color:var(--text)}
+:where(:root[data-theme="light"]) .page-tabs button.active::after{background:var(--accent)}
+:where(:root[data-theme="light"]) .toolbar select,:where(:root[data-theme="light"]) .toolbar input{background:var(--panel);border:1px solid var(--line);color:var(--text)}
+:where(:root[data-theme="light"]) .ghostbtn,:where(:root[data-theme="light"]) .solidbtn,:where(:root[data-theme="light"]) .dangerbtn{border:1px solid var(--line);background:var(--panel);color:var(--text)}
+:where(:root[data-theme="light"]) .solidbtn{background:var(--accent);border-color:var(--accent);color:#241b0c}
+:where(:root[data-theme="light"]) .dangerbtn{background:#ede0e0;color:#5b0905;border-color:#cbb8b9}
+:where(:root[data-theme="light"]) .muted{color:var(--muted)}
+:where(:root[data-theme="light"]) .metric{background:var(--panel);border:1px solid var(--line)}
+:where(:root[data-theme="light"]) .metric small{color:var(--muted)}
+:where(:root[data-theme="light"]) .metric.accent b{color:var(--accent)}
+:where(:root[data-theme="light"]) .budgetcard{background:linear-gradient(135deg, #f3f1ed, var(--panel));border:1px solid #cecac1}
+:where(:root[data-theme="light"]) .budgetinfo b.unset{color:var(--muted)}
+:where(:root[data-theme="light"]) .progress{background:#f5f5f3}
+:where(:root[data-theme="light"]) .progress span{background:var(--accent)}
+:where(:root[data-theme="light"]) .progress.over{background:#ece0e0}
+:where(:root[data-theme="light"]) .progress.over span{background:var(--danger)}
+:where(:root[data-theme="light"]) .overtext{color:var(--danger)}
+:where(:root[data-theme="light"]) .filters button{border:1px solid var(--line);background:var(--panel);color:var(--muted)}
+:where(:root[data-theme="light"]) .filters button.active{background:var(--accent2);border-color:var(--accent2);color:#10201d}
+:where(:root[data-theme="light"]) .itemcard{background:var(--panel);border:1px solid var(--line);box-shadow:0 6px 18px rgba(20,24,26,0.038)}
+:where(:root[data-theme="light"]) .thumb{background:linear-gradient(145deg, #e3e7ec, #eef0f4)}
+:where(:root[data-theme="light"]) .meta{color:var(--muted)}
+:where(:root[data-theme="light"]) .price{color:var(--accent)}
+:where(:root[data-theme="light"]) .badge{background:rgba(255,255,255,0.92);border:1px solid rgba(20,24,26,0.15)}
+:where(:root[data-theme="light"]) .priority-high{color:#5d0905;background:rgba(231, 106, 100, 0.22);border-color:rgba(231, 106, 100, 0.45)}
+:where(:root[data-theme="light"]) .priority-medium{color:#664405;background:rgba(215, 181, 109, 0.2);border-color:rgba(215, 181, 109, 0.42)}
+:where(:root[data-theme="light"]) .priority-low{color:#1f5a44;background:rgba(127, 183, 168, 0.2);border-color:rgba(127, 183, 168, 0.42)}
+:where(:root[data-theme="light"]) .statusbadge{background:rgba(255,255,255,0.92);color:#22312c}
+:where(:root[data-theme="light"]) .empty{background:var(--panel);border:1px dashed var(--line);color:var(--muted)}
+:where(:root[data-theme="light"]) .sectiontitle{color:var(--accent)}
+:where(:root[data-theme="light"]) #sheet{border:none;background:transparent;color:var(--text)}
+:where(:root[data-theme="light"]) #sheet::backdrop{background:rgba(255,255,255,0.74)}
+:where(:root[data-theme="light"]) .sheetinner{background:var(--panel);border:1px solid var(--line);border-bottom:none}
+:where(:root[data-theme="light"]) .sheetgrab{background:var(--line)}
+:where(:root[data-theme="light"]) .sheethead{background:var(--panel)}
+:where(:root[data-theme="light"]) .closebtn{border:1px solid var(--line);background:var(--panel2);color:var(--text)}
+:where(:root[data-theme="light"]) .field label{color:var(--muted)}
+:where(:root[data-theme="light"]) .field input,:where(:root[data-theme="light"]) .field select,:where(:root[data-theme="light"]) .field textarea{background:var(--panel2);border:1px solid var(--line);color:var(--text);outline:none}
+:where(:root[data-theme="light"]) .field input:focus,:where(:root[data-theme="light"]) .field select:focus,:where(:root[data-theme="light"]) .field textarea:focus{border-color:var(--accent)}
+:where(:root[data-theme="light"]) .previewtile{background:var(--panel2)}
+:where(:root[data-theme="light"]) .previewtile button{border:none;background:rgba(255,255,255,0.84);color:#141414}
+:where(:root[data-theme="light"]) .detailsphoto{background:var(--panel2)}
+:where(:root[data-theme="light"]) .detailbox{background:var(--panel2)}
+:where(:root[data-theme="light"]) .detailbox small{color:var(--muted)}
+:where(:root[data-theme="light"]) .notes{background:var(--panel2)}
+:where(:root[data-theme="light"]) .morecard{background:var(--panel);border:1px solid var(--line)}
+:where(:root[data-theme="light"]) .morecard p{color:var(--muted)}
+:where(:root[data-theme="light"]) .toast{background:#e4e7eb;border:1px solid var(--line);box-shadow:var(--shadow)}
+:where(:root[data-theme="light"]) .toastaction{background:none;border:none;color:var(--accent)}
+:where(:root[data-theme="light"]) .searchbar input{background:var(--panel);border:1px solid var(--line);color:var(--text);outline:none}
+:where(:root[data-theme="light"]) .searchbar input::placeholder{color:var(--muted)}
+:where(:root[data-theme="light"]) .searchbar input:focus{border-color:var(--accent)}
+:where(:root[data-theme="light"]) .sortselect{background:var(--panel);border:1px solid var(--line);color:var(--text)}
+:where(:root[data-theme="light"]) .statrow{border-bottom:1px solid var(--line)}
+:where(:root[data-theme="light"]) .statrow:last-child{border-bottom:none}
+:where(:root[data-theme="light"]) .statrow b{color:var(--accent)}
+:where(:root[data-theme="light"]) .statbar{background:var(--panel2)}
+:where(:root[data-theme="light"]) .statbarfill{background:linear-gradient(90deg, rgba(215, 181, 109, 0.32), rgba(215, 181, 109, 0.08))}
+:where(:root[data-theme="light"]) .statbar b{color:var(--accent)}
+:where(:root[data-theme="light"]) .updatebanner{background:#e4e7eb;border:1px solid var(--accent);box-shadow:var(--shadow)}
+:where(:root[data-theme="light"]) .updatebanner button{background:var(--accent);border:none;color:#241b0c}
+@media (min-width: 700px){:where(:root[data-theme="light"]) .sheetinner{border-bottom:1px solid var(--line)}
+}:where(:root[data-theme="light"]) .sheetformhead{background:var(--panel);border-bottom:1px solid rgba(204,208,213,0.72)}
+:where(:root[data-theme="light"]) .wardrobe-intro{background:linear-gradient(135deg, #e7eaef, var(--panel));border:1px solid var(--line)}
+:where(:root[data-theme="light"]) .wardrobe-intro span{color:var(--muted)}
+:where(:root[data-theme="light"]) .ownedlabel{color:var(--accent2)}
+:where(:root[data-theme="light"]) .ownednote{background:rgba(127, 183, 168, 0.12);border:1px solid rgba(127, 183, 168, 0.25);color:#274e44}
+:where(:root[data-theme="light"]) .purchasehint{background:rgba(215, 181, 109, 0.1);border:1px solid rgba(215, 181, 109, 0.24);color:#c5a04c}
+:where(:root[data-theme="light"]) .toolbar select{background-image:linear-gradient(45deg, transparent 50%, var(--muted) 50%),
+    linear-gradient(135deg, var(--muted) 50%, transparent 50%);background-position:calc(100% - 18px) 21px,
+    calc(100% - 13px) 21px;background-size:5px 5px;background-repeat:no-repeat}
+:where(:root[data-theme="light"]) .ask-dialog{border:1px solid var(--line);background:var(--panel);color:var(--text);box-shadow:var(--shadow)}
+:where(:root[data-theme="light"]) .ask-dialog::backdrop{background:rgba(238,241,246,0.6)}
+:where(:root[data-theme="light"]) .ask-dialog button{border:1px solid var(--line);background:var(--panel2);color:var(--text)}
+:where(:root[data-theme="light"]) .ask-dialog .ask-ok{background:var(--accent);border-color:var(--accent);color:#2a210f}
+:where(:root[data-theme="light"]) .ask-dialog .ask-ok.danger{background:var(--danger);border-color:var(--danger);color:#141414}
+:where(:root[data-theme="light"]) .tabbar-bottom{background:var(--panel);border-top:1px solid var(--line);box-shadow:0 -6px 18px rgba(20,24,26,0.112)}
+:where(:root[data-theme="light"]) .tabbar-bottom .tab{border:0;background:transparent;color:var(--muted)}
+:where(:root[data-theme="light"]) .tabbar-bottom .tab.active{background:var(--accent);color:#2a210f}
+:where(:root[data-theme="light"]) .tabbar-bottom .tab:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+:where(:root[data-theme="light"]) .moredetails{border:1px solid var(--line);background:var(--panel2)}
+:where(:root[data-theme="light"]) .moredetails > summary{color:var(--text)}
+:where(:root[data-theme="light"]) .moredetails > summary::after{color:var(--muted)}
+:where(:root[data-theme="light"]) .moredetails > summary small{color:var(--muted)}
+:where(:root[data-theme="light"]) .moredetails .field input{background:var(--panel)}
+:where(:root[data-theme="light"]) .topbar{border-bottom:0 !important;background:none !important}
+:where(:root[data-theme="light"]) #quick-add{box-shadow:0 8px 20px rgba(20,24,26,0.144)}
+:where(:root[data-theme="light"]) #app::before{background:var(--bg)}
+:root:where([data-theme="light"]){--glass-card:rgba(255,255,255,0.74);--glass-strong:rgba(255,255,255,0.9);--glass-edge:rgba(20,24,26,0.088);--glass-shadow:0 12px 30px -14px rgba(20,24,26,0.192);--gold-grad:linear-gradient(145deg,#ecd08e,#c99a45);--teal-grad:linear-gradient(135deg,#93cfbf,#4f9a87)}
+html:where([data-theme="light"]){background:var(--bg)!important}
+:where(:root[data-theme="light"]) body{background:transparent!important}
+:where(:root[data-theme="light"]) body::before{background:radial-gradient(42% 30% at 10% 6%,rgba(215,181,109,.16),transparent 70%),
+    radial-gradient(38% 30% at 96% 34%,rgba(127,183,168,.15),transparent 70%),
+    radial-gradient(46% 34% at 26% 90%,rgba(150,120,210,.13),transparent 72%),
+    var(--bg)}
+:where(:root[data-theme="light"]) #app,:where(:root[data-theme="light"]) main{background:transparent!important}
+:where(:root[data-theme="light"]) #app::before{background:rgba(255,255,255,0.92)!important}
+:where(:root[data-theme="light"]) .metric,:where(:root[data-theme="light"]) .morecard,:where(:root[data-theme="light"]) .empty,:where(:root[data-theme="light"]) .wardrobe-intro,:where(:root[data-theme="light"]) .itemcard,:where(:root[data-theme="light"]) .detailbox{background:var(--glass-card)!important;border:1px solid var(--glass-edge)!important;box-shadow:var(--glass-shadow)!important}
+:where(:root[data-theme="light"]) .empty{border-style:solid!important}
+:where(:root[data-theme="light"]) .budgetcard{background:radial-gradient(120% 100% at 0% 0%,rgba(215,181,109,.22),transparent 62%),var(--glass-card)!important;border:1px solid rgba(215,181,109,.32)!important;box-shadow:0 16px 36px -20px rgba(215,181,109,.5),var(--glass-shadow)!important}
+:where(:root[data-theme="light"]) .metric.accent{background:radial-gradient(120% 100% at 0% 0%,rgba(215,181,109,.16),transparent 65%),var(--glass-card)!important}
+:where(:root[data-theme="light"]) .itemcard .thumb{background:linear-gradient(145deg,rgba(255,255,255,0.92),rgba(255,255,255,0.92))!important}
+:where(:root[data-theme="light"]) .searchbar input,:where(:root[data-theme="light"]) #search-input,:where(:root[data-theme="light"]) #year-input,:where(:root[data-theme="light"]) select,:where(:root[data-theme="light"]) .sortselect,:where(:root[data-theme="light"]) input[type="text"],:where(:root[data-theme="light"]) input[type="search"],:where(:root[data-theme="light"]) input[type="number"],:where(:root[data-theme="light"]) input[type="url"],:where(:root[data-theme="light"]) textarea{background:rgba(20,24,26,0.045)!important;border:1px solid transparent!important}
+:where(:root[data-theme="light"]) .searchbar input:focus,:where(:root[data-theme="light"]) select:focus,:where(:root[data-theme="light"]) input:focus,:where(:root[data-theme="light"]) textarea:focus{border-color:rgba(215,181,109,.55)!important}
+:where(:root[data-theme="light"]) .filters button{background:rgba(20,24,26,0.045)!important;border:1px solid var(--glass-edge)!important;color:var(--muted)!important}
+:where(:root[data-theme="light"]) .filters button.active{background:var(--teal-grad)!important;border-color:transparent!important;color:#0d1f1a!important;box-shadow:0 6px 16px -6px rgba(127,183,168,.75),inset 0 1px 0 rgba(255,255,255,.25)!important}
+:where(:root[data-theme="light"]) .solidbtn{background:var(--gold-grad)!important;border:0!important;color:#2a1d05!important;box-shadow:0 8px 20px -8px rgba(215,181,109,.7),inset 0 1px 0 rgba(255,255,255,.3)!important}
+:where(:root[data-theme="light"]) .ghostbtn{background:rgba(20,24,26,0.045)!important;border:1px solid var(--glass-edge)!important}
+:where(:root[data-theme="light"]) #quick-add{background:var(--gold-grad)!important;color:#2a1d05!important;border:0!important;box-shadow:0 14px 30px -8px rgba(215,181,109,.65),inset 0 1px 0 rgba(255,255,255,.35)!important}
+:where(:root[data-theme="light"]) .tabbar-bottom{border:1px solid var(--glass-edge)!important;background:rgba(255,255,255,0.7)!important;box-shadow:0 14px 36px -10px rgba(20,24,26,0.176),inset 0 1px 0 rgba(255,255,255,.06)!important}
+:where(:root[data-theme="light"]) .tabbar-bottom .tab.active{background:var(--gold-grad)!important;color:#2a1d05!important;box-shadow:0 8px 20px -8px rgba(215,181,109,.8),inset 0 1px 0 rgba(255,255,255,.3)!important}
+:where(:root[data-theme="light"]) #sheet::backdrop{background:rgba(238,242,247,0.55)!important}
+:where(:root[data-theme="light"]) .sheetinner{background:rgba(255,255,255,0.92)!important;border:1px solid var(--glass-edge)!important;border-bottom:0!important;box-shadow:0 -16px 40px -12px rgba(20,24,26,0.16)}
+:where(:root[data-theme="light"]) .sheetgrab{background:rgba(20,24,26,0.12)!important}
+:where(:root[data-theme="light"]) .ask-dialog{background:rgba(255,255,255,0.92)!important;border:1px solid var(--glass-edge)!important}
+:root:where([data-theme="light"]){--bg:#eef1f5;--panel:#e7ebf0;--panel2:#e1e6ec;--line:#cacfd3;--text:#111816;--muted:#566863;--accent:#e8a33d;--accent2:#3aa684;--danger:#e5584f;--ok:#55c3a7;--glass-card:rgba(255,255,255,0.74);--glass-strong:rgba(255,255,255,0.9);--gold-grad:linear-gradient(145deg,#f7c463,#e48d24);--teal-grad:linear-gradient(135deg,#3fb38e,#1f7a62)}
+:where(:root[data-theme="light"]) body::before{background:radial-gradient(42% 30% at 10% 6%,rgba(232,163,61,.14),transparent 70%),
+    radial-gradient(38% 30% at 96% 34%,rgba(58,166,132,.18),transparent 70%),
+    radial-gradient(46% 34% at 26% 90%,rgba(110,120,230,.13),transparent 72%),
+    var(--bg)!important}
+:where(:root[data-theme="light"]) #app::before{background:rgba(255,255,255,0.92)!important}
+:where(:root[data-theme="light"]) .tabbar-bottom{background:rgba(255,255,255,0.7)!important}
+:where(:root[data-theme="light"]) .tabbar-bottom .tab.active{background:var(--teal-grad)!important;color:#fff!important;box-shadow:0 8px 20px -8px rgba(58,166,132,.8),inset 0 1px 0 rgba(255,255,255,.22)!important}
+:where(:root[data-theme="light"]) .solidbtn,:where(:root[data-theme="light"]) #quick-add{color:#241800!important;box-shadow:0 8px 20px -8px rgba(232,147,44,.75),inset 0 1px 0 rgba(255,255,255,.3)!important}
+:where(:root[data-theme="light"]) #quick-add{box-shadow:0 14px 30px -8px rgba(232,147,44,.65),inset 0 1px 0 rgba(255,255,255,.35)!important}
+:where(:root[data-theme="light"]) .filters button.active{background:var(--teal-grad)!important;color:#fff!important;box-shadow:0 6px 16px -6px rgba(58,166,132,.75),inset 0 1px 0 rgba(255,255,255,.22)!important}
+:where(:root[data-theme="light"]) .budgetcard{background:radial-gradient(120% 100% at 0% 0%,rgba(232,163,61,.2),transparent 62%),var(--glass-card)!important;border-color:rgba(232,163,61,.32)!important;box-shadow:0 16px 36px -20px rgba(232,163,61,.5),var(--glass-shadow)!important}
+:where(:root[data-theme="light"]) .metric.accent{background:radial-gradient(120% 100% at 0% 0%,rgba(232,163,61,.14),transparent 65%),var(--glass-card)!important}
+:where(:root[data-theme="light"]) .searchbar input:focus,:where(:root[data-theme="light"]) select:focus,:where(:root[data-theme="light"]) input:focus,:where(:root[data-theme="light"]) textarea:focus{border-color:rgba(232,163,61,.55)!important}
+:where(:root[data-theme="light"]) .sheetinner{background:rgba(255,255,255,0.92)!important}
+:where(:root[data-theme="light"]) .ask-dialog{background:rgba(255,255,255,0.92)!important}
+/* --- Tema chiaro: rifiniture --- */

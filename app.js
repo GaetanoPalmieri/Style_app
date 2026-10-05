@@ -1,4 +1,4 @@
-const APP_VERSION = '1.7.0';
+const APP_VERSION = '1.10.0';
 const DB_NAME = 'style-wishlist-db';
 const DB_VERSION = 1;
 const BACKUP_REMINDER_DAYS = 30;
@@ -167,7 +167,10 @@ async function put(store, value) {
   return new Promise((resolve, reject) => {
     const t = db.transaction(store, 'readwrite'),
       r = t.objectStore(store).put(value);
-    r.onsuccess = () => resolve(value);
+    r.onsuccess = () => {
+      resolve(value);
+      if (store === 'items' || (store === 'settings' && value?.key === 'budgets')) styleChanged();
+    };
     r.onerror = () => reject(r.error);
   });
 }
@@ -176,7 +179,10 @@ async function del(store, key) {
   return new Promise((resolve, reject) => {
     const t = db.transaction(store, 'readwrite'),
       r = t.objectStore(store).delete(key);
-    r.onsuccess = () => resolve();
+    r.onsuccess = () => {
+      resolve();
+      if (store === 'items') styleChanged();
+    };
     r.onerror = () => reject(r.error);
   });
 }
@@ -214,11 +220,9 @@ async function maybeShowBackupReminder() {
   const daysSincePrompt = lastPrompt ? (now - new Date(lastPrompt).getTime()) / 86400000 : Infinity;
   if (daysSincePrompt < BACKUP_PROMPT_COOLDOWN_DAYS) return;
   await put('settings', { key: 'lastBackupPromptAt', value: new Date().toISOString() });
-  toast('Non fai un backup da un po’. Vuoi esportarlo ora?', {
-    actionLabel: 'Esporta',
-    duration: 7000,
-    onAction: () => exportBackup(),
-  });
+  // 1.9.0: stesso promemoria delle altre app.
+  if (window.SuiteBackup) SuiteBackup.show({ app: 'Style', days: last ? Math.floor(daysSince) : Infinity, onExport: () => exportBackup() });
+  else toast('Non fai un backup da un po’. Vuoi esportarlo ora?', { actionLabel: 'Esporta', duration: 7000, onAction: () => exportBackup() });
 }
 async function saveSelection() {
   await put('settings', { key: 'lastSelection', value: { season: state.season, year: state.year } });
@@ -235,7 +239,18 @@ async function photoSrc(ref) {
   if (!ref) return null;
   if (ref.type === 'web') return ref.url;
   if (state.photoUrls.has(ref.id)) return state.photoUrls.get(ref.id);
-  const rec = await getOne('photos', ref.id);
+  let rec = await getOne('photos', ref.id);
+  if (!rec?.blob && window.syncStyle && SuiteSync.signedIn) {
+    // 1.10.0: foto aggiunta da un altro dispositivo: si scarica dal database online.
+    try {
+      const blob = await syncStyle.downloadPhoto(`${SuiteSync.userId}/style/${ref.id}`);
+      rec = { id: ref.id, blob, createdAt: new Date().toISOString() };
+      await put('photos', rec);
+      markStylePhotoUploaded(ref.id);
+    } catch (e) {
+      rec = null;
+    }
+  }
   if (!rec?.blob) return null;
   const u = URL.createObjectURL(rec.blob);
   state.photoUrls.set(ref.id, u);
@@ -469,7 +484,7 @@ function renderMore() {
   const lastBackupTxt = state.lastBackupAt
     ? `Ultimo backup: ${fmtDate(state.lastBackupAt.slice(0, 10))}`
     : 'Nessun backup effettuato finora.';
-  main.innerHTML = `<div class="morecard"><h3>Backup dati</h3><p>Esporta tutti gli articoli, impostazioni e foto in un file JSON. Puoi poi ripristinarlo su un altro dispositivo.</p><p class="muted" style="font-size:11px;margin-top:-4px">${esc(lastBackupTxt)}</p><div class="inline"><button class="solidbtn" id="export-backup">Esporta backup</button><button class="ghostbtn" id="import-backup">Importa</button></div></div><div class="morecard"><h3>Statistiche</h3>${statsHtml()}</div><div class="morecard"><h3>Dati locali</h3><p>Style Wishlist salva i dati sul dispositivo tramite IndexedDB. Non richiede account o server.</p><button class="dangerbtn" id="clear-data">Cancella tutti i dati</button></div><div class="morecard"><h3>App</h3><p>Style Wishlist v${APP_VERSION}<br>Installabile da Safari tramite “Aggiungi a Home”.</p></div>`;
+  main.innerHTML = `${window.SuiteTheme ? SuiteTheme.card({ cls: 'morecard', h: 'h3' }) : ''}${window.SuiteSync ? SuiteSync.cardHtml('style', { cls: 'morecard', h: 'h3' }) : ''}<div class="morecard"><h3>Backup dati</h3><p>Esporta tutti gli articoli, impostazioni e foto in un file JSON. Puoi poi ripristinarlo su un altro dispositivo.</p><p class="muted" style="font-size:11px;margin-top:-4px">${esc(lastBackupTxt)}</p><div class="inline"><button class="solidbtn" id="export-backup">Esporta backup</button><button class="ghostbtn" id="import-backup">Importa</button></div></div><div class="morecard"><h3>Statistiche</h3>${statsHtml()}</div><div class="morecard"><h3>Dati locali</h3><p>Style Wishlist salva i dati sul dispositivo tramite IndexedDB. Con la sincronizzazione (qui sopra) ne tiene anche una copia online.</p><button class="dangerbtn" id="clear-data">Cancella tutti i dati</button></div><div class="morecard"><h3>App</h3><p>Style Wishlist v${APP_VERSION}<br>Installabile da Safari tramite “Aggiungi a Home”.</p></div>`;
   main.querySelector('#export-backup').onclick = exportBackup;
   main.querySelector('#import-backup').onclick = () => backupInput.click();
   main.querySelector('#clear-data').onclick = clearAllData;
@@ -937,6 +952,7 @@ backupInput.onchange = async () => {
     state.budgets = budgets;
     revokePhotoUrls();
     await loadData();
+    styleChanged();
     toast('Backup importato');
   } catch (e) {
     console.error(e);
@@ -1064,21 +1080,10 @@ sheet.addEventListener('close', () => {
 });
 
 function showUpdateBanner(reg) {
-  if (document.querySelector('.updatebanner')) return;
-  const d = document.createElement('div');
-  d.className = 'updatebanner';
-  if (document.querySelector('.toast')) d.classList.add('stacked');
-  const span = document.createElement('span');
-  span.textContent = 'Nuova versione disponibile.';
-  const btn = document.createElement('button');
-  btn.type = 'button';
-  btn.textContent = 'Aggiorna';
-  btn.onclick = () => {
-    reg.waiting?.postMessage('skip-waiting');
-  };
-  d.appendChild(span);
-  d.appendChild(btn);
-  document.body.appendChild(d);
+  // 1.8.0: stesso popup centrale di Bilancio e Noi Due.
+  const apply = () => (reg?.waiting ? reg.waiting.postMessage('skip-waiting') : location.reload());
+  if (window.SuiteUpdate) SuiteUpdate.show('Style', apply);
+  else apply();
 }
 if ('serviceWorker' in navigator) {
   let reloading = false;
@@ -1090,6 +1095,7 @@ if ('serviceWorker' in navigator) {
   window.addEventListener('load', async () => {
     try {
       const reg = await navigator.serviceWorker.register('./sw.js');
+      if (!reg) return;
       if (reg.waiting && navigator.serviceWorker.controller) showUpdateBanner(reg);
       reg.addEventListener('updatefound', () => {
         const nw = reg.installing;
@@ -1197,3 +1203,56 @@ loadData().catch((e) => {
   document.addEventListener('scroll', upd, { passive: true, capture: true });
   upd();
 })();
+
+/* 1.10.0 — Sincronizzazione online (Supabase), tabella app_data, app "style".
+   Articoli e budget nel database; le foto nello spazio file "foto" (cartella dell'utente). */
+function styleChanged() {
+  try { localStorage.setItem('style_updated_at', new Date().toISOString()); } catch (e) {}
+  if (window.syncStyle) syncStyle.changed();
+}
+function stylePhotoUploaded() {
+  try { return new Set(JSON.parse(localStorage.getItem('style_uploaded_photos') || '[]')); } catch (e) { return new Set(); }
+}
+function markStylePhotoUploaded(id) {
+  const s = stylePhotoUploaded();
+  s.add(id);
+  try { localStorage.setItem('style_uploaded_photos', JSON.stringify([...s].slice(-3000))); } catch (e) {}
+}
+var syncStyle = window.SuiteSync
+  ? SuiteSync.register({
+      app: 'style',
+      name: 'Style',
+      scope: 'personal',
+      getLocal: async () => ({ items: await getAll('items'), budgets: state.budgets || {} }),
+      hasLocalData: () => state.items.length > 0,
+      localUpdatedAt: () => localStorage.getItem('style_updated_at'),
+      setLocal: async (data) => {
+        const items = Array.isArray(data?.items) ? data.items : [];
+        const db = await openDB();
+        await new Promise((res, rej) => {
+          const t = db.transaction(['items', 'settings'], 'readwrite');
+          t.oncomplete = res;
+          t.onerror = () => rej(t.error);
+          const st = t.objectStore('items');
+          st.clear();
+          items.forEach((it) => st.put(it));
+          t.objectStore('settings').put({ key: 'budgets', value: data?.budgets || {} });
+        });
+        state.items = items;
+        state.budgets = data?.budgets || {};
+        if (!document.getElementById('sheet')?.open) render();
+      },
+      afterPush: async (S) => {
+        const done = stylePhotoUploaded();
+        const ids = new Set();
+        state.items.forEach((it) => (it.photos || []).forEach((p) => p && p.type !== 'web' && p.id && ids.add(p.id)));
+        for (const id of ids) {
+          if (done.has(id)) continue;
+          const rec = await getOne('photos', id);
+          if (!rec?.blob) continue;
+          await S.uploadPhoto(`${SuiteSync.userId}/style/${id}`, rec.blob);
+          markStylePhotoUploaded(id);
+        }
+      },
+    })
+  : null;
