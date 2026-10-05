@@ -46,6 +46,17 @@
 #main .suite-sync-card .suite-sync-actions{display:grid!important;grid-template-columns:1fr auto!important;gap:8px!important;}
 #main .suite-sync-card .suite-sync-actions button{width:100%;margin:0!important;}
 #main .suite-sync-form input{background:rgba(127,140,150,.1)!important;border:1px solid rgba(127,140,150,.28)!important;border-radius:12px!important;}
+.suite-sync-link{justify-self:center;min-height:36px!important;border:0!important;background:transparent!important;box-shadow:none!important;font-size:13px!important;font-weight:600!important;text-decoration:underline;opacity:.75;}
+.suite-sync-more{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;}
+.suite-sync-more button{font-size:13px!important;font-weight:600!important;padding:8px 6px!important;}
+.suite-modal-card{max-height:min(80vh,620px);display:flex;flex-direction:column;text-align:left;}
+.suite-modal-card h3{text-align:center;}
+.suite-modal-text{font-size:13.5px;line-height:1.45;opacity:.8;margin:0 0 12px!important;}
+.suite-history-list{display:grid;gap:6px;overflow-y:auto;margin-bottom:12px;}
+.suite-history-row{display:flex;justify-content:space-between;align-items:center;gap:8px;min-height:44px;padding:8px 12px;border-radius:12px;border:1px solid rgba(127,140,150,.3);background:transparent;color:inherit;font:inherit;font-size:14px;text-align:left;}
+.suite-history-row.confirm{border:0;background:linear-gradient(145deg,#f7c463,#e48d24);color:#241800;font-weight:700;}
+.app-update-actions.one{grid-template-columns:1fr!important;}
+.suite-modal .suite-sync-form{gap:10px;}
 /* --- Allineamento --- */
 /* Allineamento a Bilancio / Noi Due / RecompApp: stessi fondi, accento ambra per le azioni,
    verde per le selezioni e la scheda attiva (prima oro). */
@@ -76,7 +87,6 @@ body::before{background:
 :root:where([data-theme="light"]){--bg:#f0f2f5;--panel:#eceff2;--panel2:#e7eaef;--line:#ccd0d5;--text:#101318;--muted:#525f6d;--accent:#d7b56d;--accent2:#7fb7a8;--danger:#e76a64;--ok:#65c18c;--shadow:0 14px 34px rgba(20,24,26,0.09)}
 :where(:root[data-theme="light"]) :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 html:where([data-theme="light"]),:where(:root[data-theme="light"]) body{background:var(--bg);color:var(--text)}
-:where(:root[data-theme="light"]) .topbar{background:linear-gradient(180deg, var(--bg) 0%, rgba(255,255,255,0.92) 88%, rgba(255,255,255,0.92) 100%);border-bottom:1px solid rgba(204,208,213,0.72)}
 :where(:root[data-theme="light"]) .eyebrow{color:var(--accent)}
 :where(:root[data-theme="light"]) .iconbtn{border:none;background:var(--panel2);color:var(--text)}
 :where(:root[data-theme="light"]) .iconbtn.primary{background:var(--accent);color:#2a210f}
@@ -86,21 +96,18 @@ html:where([data-theme="light"]),:where(:root[data-theme="light"]) body{backgrou
 :where(:root[data-theme="light"]) .page-tabs button.active::after{background:var(--accent)}
 :where(:root[data-theme="light"]) .toolbar select,:where(:root[data-theme="light"]) .toolbar input{background:var(--panel);border:1px solid var(--line);color:var(--text)}
 :where(:root[data-theme="light"]) .ghostbtn,:where(:root[data-theme="light"]) .solidbtn,:where(:root[data-theme="light"]) .dangerbtn{border:1px solid var(--line);background:var(--panel);color:var(--text)}
-:where(:root[data-theme="light"]) .solidbtn{background:var(--accent);border-color:var(--accent);color:#241b0c}
+:where(:root[data-theme="light"]) .solidbtn{border-color:var(--accent)}
 :where(:root[data-theme="light"]) .dangerbtn{background:#ede0e0;color:#5b0905;border-color:#cbb8b9}
 :where(:root[data-theme="light"]) .muted{color:var(--muted)}
 :where(:root[data-theme="light"]) .metric{background:var(--panel);border:1px solid var(--line)}
 :where(:root[data-theme="light"]) .metric small{color:var(--muted)}
 :where(:root[data-theme="light"]) .metric.accent b{color:var(--accent)}
-:where(:root[data-theme="light"]) .budgetcard{background:linear-gradient(135deg, #f3f1ed, var(--panel));border:1px solid #cecac1}
 :where(:root[data-theme="light"]) .budgetinfo b.unset{color:var(--muted)}
 :where(:root[data-theme="light"]) .progress{background:#f5f5f3}
 :where(:root[data-theme="light"]) .progress span{background:var(--accent)}
 :where(:root[data-theme="light"]) .progress.over{background:#ece0e0}
 :where(:root[data-theme="light"]) .progress.over span{background:var(--danger)}
 :where(:root[data-theme="light"]) .overtext{color:var(--danger)}
-:where(:root[data-theme="light"]) .filters button{border:1px solid var(--line);background:var(--panel);color:var(--muted)}
-:where(:root[data-theme="light"]) .filters button.active{background:var(--accent2);border-color:var(--accent2);color:#10201d}
 :where(:root[data-theme="light"]) .itemcard{background:var(--panel);border:1px solid var(--line);box-shadow:0 6px 18px rgba(20,24,26,0.038)}
 :where(:root[data-theme="light"]) .thumb{background:linear-gradient(145deg, #e3e7ec, #eef0f4)}
 :where(:root[data-theme="light"]) .meta{color:var(--muted)}
@@ -111,11 +118,7 @@ html:where([data-theme="light"]),:where(:root[data-theme="light"]) body{backgrou
 :where(:root[data-theme="light"]) .priority-low{color:#1f5a44;background:rgba(127, 183, 168, 0.2);border-color:rgba(127, 183, 168, 0.42)}
 :where(:root[data-theme="light"]) .statusbadge{background:rgba(255,255,255,0.92);color:#22312c}
 :where(:root[data-theme="light"]) .empty{background:var(--panel);border:1px dashed var(--line);color:var(--muted)}
-:where(:root[data-theme="light"]) .sectiontitle{color:var(--accent)}
 :where(:root[data-theme="light"]) #sheet{border:none;background:transparent;color:var(--text)}
-:where(:root[data-theme="light"]) #sheet::backdrop{background:rgba(255,255,255,0.74)}
-:where(:root[data-theme="light"]) .sheetinner{background:var(--panel);border:1px solid var(--line);border-bottom:none}
-:where(:root[data-theme="light"]) .sheetgrab{background:var(--line)}
 :where(:root[data-theme="light"]) .sheethead{background:var(--panel)}
 :where(:root[data-theme="light"]) .closebtn{border:1px solid var(--line);background:var(--panel2);color:var(--text)}
 :where(:root[data-theme="light"]) .field label{color:var(--muted)}
@@ -153,14 +156,13 @@ html:where([data-theme="light"]),:where(:root[data-theme="light"]) body{backgrou
 :where(:root[data-theme="light"]) .toolbar select{background-image:linear-gradient(45deg, transparent 50%, var(--muted) 50%),
     linear-gradient(135deg, var(--muted) 50%, transparent 50%);background-position:calc(100% - 18px) 21px,
     calc(100% - 13px) 21px;background-size:5px 5px;background-repeat:no-repeat}
-:where(:root[data-theme="light"]) .ask-dialog{border:1px solid var(--line);background:var(--panel);color:var(--text);box-shadow:var(--shadow)}
+:where(:root[data-theme="light"]) .ask-dialog{color:var(--text);box-shadow:var(--shadow)}
 :where(:root[data-theme="light"]) .ask-dialog::backdrop{background:rgba(238,241,246,0.6)}
 :where(:root[data-theme="light"]) .ask-dialog button{border:1px solid var(--line);background:var(--panel2);color:var(--text)}
 :where(:root[data-theme="light"]) .ask-dialog .ask-ok{background:var(--accent);border-color:var(--accent);color:#2a210f}
 :where(:root[data-theme="light"]) .ask-dialog .ask-ok.danger{background:var(--danger);border-color:var(--danger);color:#141414}
-:where(:root[data-theme="light"]) .tabbar-bottom{background:var(--panel);border-top:1px solid var(--line);box-shadow:0 -6px 18px rgba(20,24,26,0.112)}
+:where(:root[data-theme="light"]) .tabbar-bottom{border-top:1px solid var(--line)}
 :where(:root[data-theme="light"]) .tabbar-bottom .tab{border:0;background:transparent;color:var(--muted)}
-:where(:root[data-theme="light"]) .tabbar-bottom .tab.active{background:var(--accent);color:#2a210f}
 :where(:root[data-theme="light"]) .tabbar-bottom .tab:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 :where(:root[data-theme="light"]) .moredetails{border:1px solid var(--line);background:var(--panel2)}
 :where(:root[data-theme="light"]) .moredetails > summary{color:var(--text)}
@@ -168,8 +170,6 @@ html:where([data-theme="light"]),:where(:root[data-theme="light"]) body{backgrou
 :where(:root[data-theme="light"]) .moredetails > summary small{color:var(--muted)}
 :where(:root[data-theme="light"]) .moredetails .field input{background:var(--panel)}
 :where(:root[data-theme="light"]) .topbar{border-bottom:0 !important;background:none !important}
-:where(:root[data-theme="light"]) #quick-add{box-shadow:0 8px 20px rgba(20,24,26,0.144)}
-:where(:root[data-theme="light"]) #app::before{background:var(--bg)}
 :root:where([data-theme="light"]){--glass-card:rgba(255,255,255,0.74);--glass-strong:rgba(255,255,255,0.9);--glass-edge:rgba(20,24,26,0.088);--glass-shadow:0 12px 30px -14px rgba(20,24,26,0.192);--gold-grad:linear-gradient(145deg,#ecd08e,#c99a45);--teal-grad:linear-gradient(135deg,#93cfbf,#4f9a87)}
 html:where([data-theme="light"]){background:var(--bg)!important}
 :where(:root[data-theme="light"]) body{background:transparent!important}

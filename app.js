@@ -1,4 +1,4 @@
-const APP_VERSION = '1.10.0';
+const APP_VERSION = '1.11.0';
 const DB_NAME = 'style-wishlist-db';
 const DB_VERSION = 1;
 const BACKUP_REMINDER_DAYS = 30;
@@ -137,22 +137,6 @@ function openDB() {
     };
   });
   return dbPromise;
-}
-async function tx(store, mode, fn) {
-  const db = await openDB();
-  return new Promise((resolve, reject) => {
-    const t = db.transaction(store, mode),
-      s = t.objectStore(store);
-    let out;
-    try {
-      out = fn(s);
-    } catch (e) {
-      reject(e);
-      return;
-    }
-    t.oncomplete = () => resolve(out);
-    t.onerror = () => reject(t.error);
-  });
 }
 async function getAll(store) {
   const db = await openDB();
@@ -630,7 +614,7 @@ function bindPhotoForm() {
     renderPhotoPreview();
   });
 }
-async function compressImage(file, maxSize = 1600, quality = 0.82) {
+async function compressImage(file, maxSize = 1200, quality = 0.78) {
   try {
     if (!('createImageBitmap' in window)) return file;
     const bitmap = await createImageBitmap(file);

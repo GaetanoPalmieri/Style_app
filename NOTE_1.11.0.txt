@@ -1,0 +1,8 @@
+Style 1.11.0
+- Sincronizzazione più sicura:
+  · "Versioni precedenti" (Altro › Sincronizzazione): il database tiene una copia all'ora dei dati, fino a 60,
+    e puoi tornare a una di queste (i dati attuali vengono prima salvati come nuova versione);
+  · un elemento cancellato su un dispositivo non ricompare più unendo i dati con un altro;
+  · "Password dimenticata?" nella schermata di accesso e "Cambia password" quando sei collegato.
+- Foto più leggere: massimo 1200 pixel (prima 1600), meno spazio sul telefono e online.
+- Pulizia: tolte 58 regole di stile inutili; schermate identiche.
