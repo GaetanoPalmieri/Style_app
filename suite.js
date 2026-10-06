@@ -259,12 +259,16 @@
         if (!row && !opts.hasLocalData()) { m.linked = true; m.dirty = false; m.lastSync = now(); A.setMeta(m); return 'empty'; }
         var rev0 = A.rev;
         var body = { data: await opts.getLocal(), updated_at: now() };
+        if (opts.scope === 'couple' && typeof opts.editorTag === 'function') {
+          try { body.updated_by_person = opts.editorTag() || null; } catch (e) {}
+        }
         var res;
         if (row) {
           res = await api('/rest/v1/' + ref.table + '?' + ref.filter + '&updated_at=eq.' + encodeURIComponent(row.updated_at), { method: 'PATCH', json: body, headers: { Prefer: 'return=representation' } });
           if (!res.length) return 'conflict';
         } else {
           var ins = {}; for (var k in ref.insert) ins[k] = ref.insert[k]; ins.data = body.data; ins.updated_at = body.updated_at;
+          if (body.updated_by_person !== undefined) ins.updated_by_person = body.updated_by_person;
           try { res = await api('/rest/v1/' + ref.table, { method: 'POST', json: ins, headers: { Prefer: 'return=representation' } }); }
           catch (e) { if (e.status === 409) return 'conflict'; throw e; }
         }

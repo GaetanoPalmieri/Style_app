@@ -1,0 +1,11 @@
+VERSIONE 1.12.0 — Restyling unificato della suite
+
+- Nuovo file suite-tokens.css, identico nelle quattro app (Bilancio, Noi Due,
+  RecompApp, Style Wishlist): stessi colori, vetro, raggi e tipografia.
+  Una modifica grafica ora si fa una volta sola e si copia nelle altre.
+- Tema chiaro unificato: crema caldo con card bianche in tutte le app.
+- Titoli e numeri in SF Pro Display, con cifre allineate negli importi.
+- Service worker: suite-tokens.css precaricato, cache rinnovata.
+- Rimosso blocco tema chiaro duplicato (codice morto con accento oro).
+- suite.js ora identico nelle 4 app (versione master in _condivisi/).
+- Note di versione vecchie spostate in note_versioni/.

@@ -1,4 +1,4 @@
-const APP_VERSION = '1.11.0';
+const APP_VERSION = '1.12.0';
 const DB_NAME = 'style-wishlist-db';
 const DB_VERSION = 1;
 const BACKUP_REMINDER_DAYS = 30;
