@@ -1,4 +1,4 @@
-const APP_VERSION = '1.12.0';
+const APP_VERSION = '1.12.1';
 const DB_NAME = 'style-wishlist-db';
 const DB_VERSION = 1;
 const BACKUP_REMINDER_DAYS = 30;
@@ -65,6 +65,7 @@ function esc(s) {
   );
 }
 function money(n) {
+  if (window.SuiteFmt) return SuiteFmt.money(n); // formato unico della suite: 1.234,56 €
   return new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(Number(n) || 0);
 }
 function id() {

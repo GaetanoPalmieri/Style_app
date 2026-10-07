@@ -1,0 +1,2 @@
+Style Wishlist 1.9.0
+- Promemoria backup uguale alle altre app: popup centrale con "Più tardi" ed "Esporta" (prima era un avviso in basso).

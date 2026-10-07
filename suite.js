@@ -537,3 +537,33 @@
     modal: modal,
   };
 })();
+
+/* ===================== Formato importi unico per tutta la suite =====================
+   1.234,56 € — simbolo dopo, punto per le migliaia, sempre due decimali, spazio non
+   separabile prima di € (l'importo non va a capo). Usato da Bilancio, Noi Due, Style e
+   Bet Tracker, e uguale nelle notifiche. */
+(function () {
+  function group(s) { return s.replace(/\B(?=(\d{3})+(?!\d))/g, '.'); }
+  window.SuiteFmt = {
+    money: function (n) {
+      var v = Math.round((Number(n) || 0) * 100) / 100;
+      var neg = v <= -0.005, p = Math.abs(v).toFixed(2).split('.');
+      return (neg ? '-' : '') + group(p[0]) + ',' + p[1] + ' €';
+    },
+    /* Etichette compatte per gli assi dei grafici: 950 €, 1,5k €, 12k € */
+    short: function (n) {
+      var a = Math.abs(Number(n) || 0), s = n < 0 ? '-' : '';
+      if (a >= 10000) return s + Math.round(a / 1000) + 'k €';
+      if (a >= 1000) return s + (a / 1000).toFixed(1).replace('.', ',').replace(/,0$/, '') + 'k €';
+      return s + group(String(Math.round(a))) + ' €';
+    },
+    /* Legge un importo scritto a mano: "1.234,56", "1234.56", "€ 12,5", "12,50 €" */
+    parse: function (str) {
+      var t = String(str == null ? '' : str).replace(/[€\s ]/g, '');
+      if (!t) return NaN;
+      if (t.indexOf(',') >= 0) t = t.replace(/\./g, '').replace(',', '.');
+      else if (/^\d{1,3}(\.\d{3})+$/.test(t)) t = t.replace(/\./g, '');
+      return parseFloat(t);
+    }
+  };
+})();

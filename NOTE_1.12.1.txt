@@ -1,0 +1,4 @@
+VERSIONE 1.12.1 — Formato importi unico della suite
+
+- Importi come in tutte le app: 1.234,56 € (ora con il punto delle migliaia anche sotto 10.000).
+- suite.js comune aggiornato.
