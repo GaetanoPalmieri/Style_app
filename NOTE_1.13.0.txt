@@ -1,0 +1,11 @@
+VERSIONE 1.13.0 — Dati dal link del negozio, prezzo sceso, costo per utilizzo
+
+- Nuovo articolo: in alto "Link del negozio"; incollandolo (o con "⬇︎ Dati") arrivano nome, foto,
+  negozio e prezzo dal sito.
+- Una volta al giorno l'app controlla il prezzo degli articoli in wishlist con link: se scende compare
+  "📉 −20,00 €" sulla scheda e un avviso. Nel dettaglio: prezzo sul sito e "Controlla ora".
+- Guardaroba: "Indossato N volte" con "＋1 oggi" e il costo per utilizzo (anche sulla scheda).
+- Le statistiche sono passate da Altro ad Acquistati.
+- Torna il titolo di pagina (piccolo); etichette dei riquadri in alto leggibili; i filtri mostrano
+  che la riga scorre.
+- Grafica comune alle app (suite-ui.css).

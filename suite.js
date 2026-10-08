@@ -567,3 +567,83 @@
     }
   };
 })();
+
+/* ===================== SuiteUI — comportamenti grafici comuni =====================
+   Pulsante "+" che si rimpicciolisce scorrendo verso il basso (così non copre importi e
+   righe) e torna grande appena si risale o si arriva in cima. Vale per tutte le app:
+   basta che il pulsante abbia id fabAdd o quick-add (o l'attributo data-suite-fab). */
+(function () {
+  var last = 0, ticking = false;
+  function y() { return window.scrollY || document.documentElement.scrollTop || 0; }
+  function update() {
+    ticking = false;
+    var cur = y(), root = document.documentElement;
+    if (cur < 80) root.classList.remove('suite-fab-mini');
+    else if (cur > last + 6) root.classList.add('suite-fab-mini');
+    else if (cur < last - 6) root.classList.remove('suite-fab-mini');
+    last = cur;
+  }
+  window.addEventListener('scroll', function () {
+    if (!ticking) { ticking = true; requestAnimationFrame(update); }
+  }, { passive: true });
+})();
+
+/* ===================== Tieni premuto (Bilancio e Noi Due) =====================
+   bindLongPress(el, handler): tenendo premuto 0,5 s chiama handler; il tocco che segue non
+   apre anche l'azione normale. closeLongPressPopup() chiude il popup #lpPopup aperto. */
+function lpOutside(e){ if(!e.target.closest("#lpPopup")) closeLongPressPopup(); }
+function closeLongPressPopup(){
+  document.getElementById("lpPopup")?.remove();
+  document.removeEventListener("pointerdown",lpOutside,true);
+}
+var lpSuppressClick = false;
+document.addEventListener("click",e=>{ if(lpSuppressClick){ e.preventDefault(); e.stopPropagation(); lpSuppressClick=false; } },true);
+function bindLongPress(el,handler){
+  if(!el || el.dataset.lpBound) return;
+  el.dataset.lpBound="1"; el.classList.add("lp-target");
+  let timer=null,x=0,y=0;
+  const cancel=()=>{clearTimeout(timer);timer=null;el.classList.remove("lp-pressing");};
+  el.addEventListener("pointerdown",e=>{
+    if(e.button!==undefined && e.button!==0) return;
+    x=e.clientX;y=e.clientY;el.classList.add("lp-pressing");
+    timer=setTimeout(()=>{timer=null;el.classList.remove("lp-pressing");lpSuppressClick=true;setTimeout(()=>{lpSuppressClick=false;},700);try{navigator.vibrate?.(12);}catch(_){};handler(e);},480);
+  });
+  el.addEventListener("pointermove",e=>{if(timer && Math.hypot(e.clientX-x,e.clientY-y)>10) cancel();});
+  ["pointerup","pointercancel","pointerleave"].forEach(ev=>el.addEventListener(ev,cancel));
+  el.addEventListener("contextmenu",e=>e.preventDefault());
+}
+
+/* ===================== SuiteLink — dati di un prodotto da un link =====================
+   SuiteLink.preview(url) → {title, image, price, publisher, url} oppure null.
+   Il browser non può leggere le pagine di altri siti: passa da Microlink (gratuito, senza chiave).
+   Usato da Style Wishlist (Noi Due ha la sua copia, identica). */
+(function () {
+  function cleanTitle(title, publisher) {
+    var t = String(title || '').replace(/\s+/g, ' ').trim();
+    var parts = t.split(/\s+[|·•–—-]\s+/);
+    if (parts.length > 1 && parts[0].length >= 4) {
+      var last = parts[parts.length - 1].toLowerCase();
+      if (!publisher || last.indexOf(String(publisher).toLowerCase().slice(0, 5)) >= 0 || /amazon|ikea|zalando|shop|store|online|\.it|\.com/.test(last)) t = parts.slice(0, -1).join(' - ');
+    }
+    return t.replace(/^(Amazon\.it\s*:\s*)/i, '').slice(0, 120);
+  }
+  async function preview(url) {
+    var base = 'https://api.microlink.io/?url=' + encodeURIComponent(url);
+    var rules = '&data.price.selector=' + encodeURIComponent('meta[property="product:price:amount"],meta[property="og:price:amount"],meta[itemprop="price"],[itemprop="price"][content]') + '&data.price.attr=content';
+    var qs = [base + rules, base];
+    for (var i = 0; i < qs.length; i++) {
+      try {
+        var r = await fetch(qs[i]);
+        var j = await r.json();
+        if (j && j.status === 'success' && j.data) {
+          var d = j.data, price = parseFloat(String(d.price == null ? '' : d.price).replace(',', '.'));
+          var img = (d.image && /^https:\/\//.test(d.image.url || '')) ? d.image.url : ((d.logo && /^https:\/\//.test(d.logo.url || '')) ? d.logo.url : '');
+          return { title: cleanTitle(d.title, d.publisher), image: img, url: /^https?:\/\//.test(d.url || '') ? d.url : url,
+            price: isFinite(price) && price > 0 && price < 100000 ? Math.round(price * 100) / 100 : null, publisher: String(d.publisher || '').slice(0, 40) };
+        }
+      } catch (e) { /* rete assente o limite gratuito: riprovo senza regole o rinuncio */ }
+    }
+    return null;
+  }
+  window.SuiteLink = { preview: preview, cleanTitle: cleanTitle };
+})();

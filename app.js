@@ -1,4 +1,4 @@
-const APP_VERSION = '1.12.1';
+const APP_VERSION = '1.13.0';
 const DB_NAME = 'style-wishlist-db';
 const DB_VERSION = 1;
 const BACKUP_REMINDER_DAYS = 30;
@@ -193,6 +193,50 @@ async function loadData() {
   }
   render();
   setTimeout(() => maybeShowBackupReminder().catch(console.error), 2000);
+  setTimeout(() => priceWatch().catch(() => {}), 4000);
+}
+/* v1.13.0 — Avviso prezzo sceso: una volta al giorno controlla il prezzo dal link degli articoli
+   in wishlist (al massimo 8 per volta, uno ogni 2 secondi). Se il prezzo è più basso di quello
+   previsto (o dell'ultimo controllo) l'articolo mostra "📉" e arriva un avviso. */
+function todayStr() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+async function checkItemPrice(item, { quiet = false } = {}) {
+  if (!window.SuiteLink || !/^https?:\/\//i.test(item.url || '')) return null;
+  const p = await SuiteLink.preview(item.url);
+  if (!p || !p.price) return null;
+  const ref = Number(item.priceCheck?.price) || Number(item.expectedPrice) || 0;
+  item.priceCheck = { price: p.price, at: todayStr() };
+  let dropped = false;
+  if (ref > 0 && p.price < ref - 0.009) {
+    const from = item.priceDrop?.from && item.priceDrop.from > p.price ? item.priceDrop.from : ref;
+    item.priceDrop = { from, to: p.price, at: todayStr() };
+    dropped = true;
+  } else if (item.priceDrop && p.price >= item.priceDrop.from) item.priceDrop = null;
+  else if (item.priceDrop) item.priceDrop.to = p.price;
+  await put('items', item);
+  if (dropped && !quiet) toast(`📉 Prezzo sceso: ${item.name} da ${money(item.priceDrop.from)} a ${money(p.price)}`);
+  return p.price;
+}
+async function priceWatch() {
+  if (navigator.onLine === false) return;
+  const today = todayStr();
+  const todo = state.items
+    .filter((i) => ['wishlist', 'ordered'].includes(i.status || 'wishlist') && /^https?:\/\//i.test(i.url || '') && i.priceCheck?.at !== today)
+    .slice(0, 8);
+  let changed = false;
+  for (const item of todo) {
+    const before = JSON.stringify(item.priceDrop || null);
+    await checkItemPrice(item);
+    if (JSON.stringify(item.priceDrop || null) !== before) changed = true;
+    await new Promise((r) => setTimeout(r, 2000));
+  }
+  if (changed && !document.querySelector('dialog[open]')) render();
+}
+function costPerWear(item) {
+  const price = Number(item.paidPrice ?? item.expectedPrice) || 0;
+  return item.wears > 0 && price > 0 ? price / item.wears : null;
 }
 async function maybeShowBackupReminder() {
   if (!state.items.length) return;
@@ -377,7 +421,7 @@ function priorityClass(p) {
 }
 function cardHtml(item) {
   const owned = item.status === 'owned';
-  return `<article class="itemcard" data-item="${item.id}"><div class="thumb" data-thumb="${item.id}"><span class="placeholder">${placeholderFor(item)}</span></div>${owned ? '' : `<span class="badge ${priorityClass(item.priority)}">${esc(item.priority || 'Media')}</span>`}${item.status === 'ordered' ? '<span class="statusbadge">Ordinato</span>' : ''}<div class="cardbody"><div class="itemtitle">${esc(item.name)}</div><div class="meta">${esc(item.brand || item.category || '')}</div>${owned ? '<div class="ownedlabel">Nel guardaroba</div>' : `<div class="price">${money(item.status === 'purchased' ? (item.paidPrice ?? item.expectedPrice) : item.expectedPrice)}</div>`}</div></article>`;
+  return `<article class="itemcard" data-item="${item.id}"><div class="thumb" data-thumb="${item.id}"><span class="placeholder">${placeholderFor(item)}</span></div>${owned ? '' : `<span class="badge ${priorityClass(item.priority)}">${esc(item.priority || 'Media')}</span>`}${item.status === 'ordered' ? '<span class="statusbadge">Ordinato</span>' : ''}${item.priceDrop && ['wishlist', 'ordered'].includes(item.status || 'wishlist') ? `<span class="dropbadge">📉 −${money(item.priceDrop.from - item.priceDrop.to)}</span>` : ''}<div class="cardbody"><div class="itemtitle">${esc(item.name)}</div><div class="meta">${esc(item.brand || item.category || '')}</div>${owned ? '<div class="ownedlabel">Nel guardaroba</div>' : `<div class="price">${money(item.status === 'purchased' ? (item.paidPrice ?? item.expectedPrice) : item.priceDrop ? item.priceDrop.to : item.expectedPrice)}</div>`}${costPerWear(item) ? `<div class="cpw">${money(costPerWear(item))} per uso · ${item.wears}×</div>` : ''}</div></article>`;
 }
 async function hydrateThumbs(root, items) {
   await Promise.all(
@@ -407,6 +451,14 @@ async function renderWishlist() {
         render();
       }),
   );
+  // v1.13.0 — la sfumatura sparisce quando la riga dei filtri è a fine corsa; il filtro attivo resta visibile
+  const fbar = main.querySelector('.filters');
+  if (fbar) {
+    const edge = () => fbar.classList.toggle('at-end', fbar.scrollLeft + fbar.clientWidth >= fbar.scrollWidth - 4);
+    fbar.addEventListener('scroll', edge, { passive: true });
+    fbar.querySelector('.active')?.scrollIntoView({ inline: 'center', block: 'nearest' });
+    edge();
+  }
   main.querySelector('#edit-budget')?.addEventListener('click', editBudget);
   main.querySelector('#empty-add')?.addEventListener('click', () => openItemForm());
   main.querySelectorAll('[data-item]').forEach((c) => (c.onclick = () => openDetails(c.dataset.item)));
@@ -416,7 +468,8 @@ async function renderPurchased() {
   const allItems = purchasedItems();
   const total = allItems.reduce((s, i) => s + (Number(i.paidPrice) || Number(i.expectedPrice) || 0), 0);
   const shown = sortItems(applySearch(allItems));
-  main.innerHTML = `<div class="summary"><div class="metric"><small>Acquisti</small><b>${allItems.length}</b></div><div class="metric accent"><small>Speso</small><b>${money(total)}</b></div><div class="metric"><small>Guardaroba</small><b>${wardrobeItems().length}</b></div></div>${searchSortBar()}${shown.length ? `<div class="grid">${shown.map(cardHtml).join('')}</div>` : '<div class="empty"><div class="big">✓</div><b>Nessun acquisto registrato</b><div style="margin-top:6px">Gli articoli acquistati dalla wishlist compariranno qui.</div></div>'}`;
+  // v1.13.0 — le statistiche stanno qui (prima erano in Altro)
+  main.innerHTML = `<div class="summary"><div class="metric"><small>Acquisti</small><b>${allItems.length}</b></div><div class="metric accent"><small>Speso</small><b>${money(total)}</b></div><div class="metric"><small>Guardaroba</small><b>${wardrobeItems().length}</b></div></div>${allItems.length ? `<details class="morecard st-stats"><summary><h3>Statistiche</h3><span class="muted">speso e categorie</span></summary>${statsHtml()}</details>` : ''}${searchSortBar()}${shown.length ? `<div class="grid">${shown.map(cardHtml).join('')}</div>` : '<div class="empty"><div class="big">✓</div><b>Nessun acquisto registrato</b><div style="margin-top:6px">Gli articoli acquistati dalla wishlist compariranno qui.</div></div>'}`;
   bindSearchSort();
   main.querySelectorAll('[data-item]').forEach((c) => (c.onclick = () => openDetails(c.dataset.item)));
   await hydrateThumbs(main, shown);
@@ -469,7 +522,7 @@ function renderMore() {
   const lastBackupTxt = state.lastBackupAt
     ? `Ultimo backup: ${fmtDate(state.lastBackupAt.slice(0, 10))}`
     : 'Nessun backup effettuato finora.';
-  main.innerHTML = `${window.SuiteTheme ? SuiteTheme.card({ cls: 'morecard', h: 'h3' }) : ''}${window.SuiteSync ? SuiteSync.cardHtml('style', { cls: 'morecard', h: 'h3' }) : ''}<div class="morecard"><h3>Backup dati</h3><p>Esporta tutti gli articoli, impostazioni e foto in un file JSON. Puoi poi ripristinarlo su un altro dispositivo.</p><p class="muted" style="font-size:11px;margin-top:-4px">${esc(lastBackupTxt)}</p><div class="inline"><button class="solidbtn" id="export-backup">Esporta backup</button><button class="ghostbtn" id="import-backup">Importa</button></div></div><div class="morecard"><h3>Statistiche</h3>${statsHtml()}</div><div class="morecard"><h3>Dati locali</h3><p>Style Wishlist salva i dati sul dispositivo tramite IndexedDB. Con la sincronizzazione (qui sopra) ne tiene anche una copia online.</p><button class="dangerbtn" id="clear-data">Cancella tutti i dati</button></div><div class="morecard"><h3>App</h3><p>Style Wishlist v${APP_VERSION}<br>Installabile da Safari tramite “Aggiungi a Home”.</p></div>`;
+  main.innerHTML = `${window.SuiteTheme ? SuiteTheme.card({ cls: 'morecard', h: 'h3' }) : ''}${window.SuiteSync ? SuiteSync.cardHtml('style', { cls: 'morecard', h: 'h3' }) : ''}<div class="morecard"><h3>Backup dati</h3><p>Esporta tutti gli articoli, impostazioni e foto in un file JSON. Puoi poi ripristinarlo su un altro dispositivo.</p><p class="muted" style="font-size:11px;margin-top:-4px">${esc(lastBackupTxt)}</p><div class="inline"><button class="solidbtn" id="export-backup">Esporta backup</button><button class="ghostbtn" id="import-backup">Importa</button></div></div><div class="morecard"><h3>Dati locali</h3><p>Style Wishlist salva i dati sul dispositivo tramite IndexedDB. Con la sincronizzazione (qui sopra) ne tiene anche una copia online.</p><button class="dangerbtn" id="clear-data">Cancella tutti i dati</button></div><div class="morecard"><h3>App</h3><p>Style Wishlist v${APP_VERSION}<br>Installabile da Safari tramite “Aggiungi a Home”.</p></div>`;
   main.querySelector('#export-backup').onclick = exportBackup;
   main.querySelector('#import-backup').onclick = () => backupInput.click();
   main.querySelector('#clear-data').onclick = clearAllData;
@@ -530,7 +583,7 @@ async function openItemForm(item = null) {
   const draftPhotosSnapshot = (item?.photos || []).map((x) => ({ ...x }));
   const v = itemFormValues(item || {});
   sheetOpen(
-    `${formSheetHead(item ? 'Modifica articolo' : 'Nuovo articolo', 'item-form')}<form id="item-form"><div class="field full"><label>Foto</label><div class="photoactions two"><button type="button" class="ghostbtn" id="take-photo">📷 Fotocamera</button><button type="button" class="ghostbtn" id="pick-photo">🖼️ Galleria</button></div><div class="photopreview" id="photo-preview"></div></div><div class="formgrid"><div class="field full"><label>Nome *</label><input name="name" value="${esc(v.name)}" required placeholder="Es. Cappotto lana"></div><div class="field"><label>Categoria *</label><select name="category" required>${v.category ? '' : '<option value="" selected disabled>Scegli categoria…</option>'}${CATEGORIES.map((c) => `<option ${c === v.category ? 'selected' : ''}>${c}</option>`).join('')}</select></div><div class="field"><label>Priorità</label><select name="priority">${['Alta', 'Media', 'Bassa'].map((p) => `<option ${p === v.priority ? 'selected' : ''}>${p}</option>`).join('')}</select></div><div class="field"><label>Stagione</label><select name="season">${SEASONS.map((s) => `<option ${s === v.season ? 'selected' : ''}>${s}</option>`).join('')}</select></div><div class="field"><label>Anno</label><input name="year" list="year-form-options" value="${esc(v.year)}">${yearDatalist('year-form-options')}</div><div class="field full"><label>Prezzo previsto €</label><input name="expectedPrice" type="number" step="0.01" inputmode="decimal" value="${esc(v.expectedPrice)}"></div><details class="field full moredetails" ${v.brand || v.color || v.size || v.shop || v.url ? 'open' : ''}><summary>Dettagli <small>marca, colore, taglia, negozio, link</small></summary><div class="formgrid"><div class="field"><label>Marca</label><input name="brand" value="${esc(v.brand)}"></div><div class="field"><label>Colore</label><input name="color" value="${esc(v.color)}"></div><div class="field"><label>Taglia</label><input name="size" value="${esc(v.size)}"></div><div class="field"><label>Negozio</label><input name="shop" value="${esc(v.shop)}"></div><div class="field full"><label>Link prodotto</label><input name="url" type="url" value="${esc(v.url)}" placeholder="https://..."></div></div></details><div class="field full"><label>Note</label><textarea name="notes" placeholder="Es. Aspettare i saldi">${esc(v.notes)}</textarea></div></div></form>`,
+    `${formSheetHead(item ? 'Modifica articolo' : 'Nuovo articolo', 'item-form')}<form id="item-form"><div class="field full"><label>Foto</label><div class="photoactions two"><button type="button" class="ghostbtn" id="take-photo">📷 Fotocamera</button><button type="button" class="ghostbtn" id="pick-photo">🖼️ Galleria</button></div><div class="photopreview" id="photo-preview"></div></div><div class="formgrid"><div class="field full"><label>Link del negozio <small>(facoltativo: compila nome, foto e prezzo)</small></label><div class="st-linkrow"><input name="url" type="url" value="${esc(v.url)}" placeholder="Incolla il link del negozio"><button type="button" class="ghostbtn st-linkbtn" id="link-fetch" aria-label="Prendi nome, foto e prezzo dal link">⬇︎ Dati</button></div><small class="st-linkhint" id="link-hint">Incolla il link: nome, foto e prezzo arrivano dal sito.</small></div><div class="field full"><label>Nome *</label><input name="name" value="${esc(v.name)}" required placeholder="Es. Cappotto lana"></div><div class="field"><label>Categoria *</label><select name="category" required>${v.category ? '' : '<option value="" selected disabled>Scegli categoria…</option>'}${CATEGORIES.map((c) => `<option ${c === v.category ? 'selected' : ''}>${c}</option>`).join('')}</select></div><div class="field"><label>Priorità</label><select name="priority">${['Alta', 'Media', 'Bassa'].map((p) => `<option ${p === v.priority ? 'selected' : ''}>${p}</option>`).join('')}</select></div><div class="field"><label>Stagione</label><select name="season">${SEASONS.map((s) => `<option ${s === v.season ? 'selected' : ''}>${s}</option>`).join('')}</select></div><div class="field"><label>Anno</label><input name="year" list="year-form-options" value="${esc(v.year)}">${yearDatalist('year-form-options')}</div><div class="field full"><label>Prezzo previsto €</label><input name="expectedPrice" type="number" step="0.01" inputmode="decimal" value="${esc(v.expectedPrice)}"></div><details class="field full moredetails" ${v.brand || v.color || v.size || v.shop ? 'open' : ''}><summary>Dettagli <small>marca, colore, taglia, negozio</small></summary><div class="formgrid"><div class="field"><label>Marca</label><input name="brand" value="${esc(v.brand)}"></div><div class="field"><label>Colore</label><input name="color" value="${esc(v.color)}"></div><div class="field"><label>Taglia</label><input name="size" value="${esc(v.size)}"></div><div class="field"><label>Negozio</label><input name="shop" value="${esc(v.shop)}"></div></div></details><div class="field full"><label>Note</label><textarea name="notes" placeholder="Es. Aspettare i saldi">${esc(v.notes)}</textarea></div></div></form>`,
   );
   state.draftPhotos = draftPhotosSnapshot;
   state.draftPhotosNew = new Set();
@@ -580,6 +633,11 @@ async function saveWardrobeItemFromForm(e) {
     photos: state.draftPhotos.map((x) => ({ ...x })),
     createdAt: old?.createdAt || new Date().toISOString(),
     updatedAt: new Date().toISOString(),
+    // v1.13.0 — controllo del prezzo e utilizzi (restano anche modificando l'articolo)
+    priceCheck: old?.priceCheck || null,
+    priceDrop: old?.priceDrop || null,
+    wears: old?.wears || 0,
+    lastWorn: old?.lastWorn || null,
   };
   if (!obj.name) {
     toast('Inserisci il nome');
@@ -614,6 +672,29 @@ function bindPhotoForm() {
     input.value = '';
     renderPhotoPreview();
   });
+  // v1.13.0 — dal link del negozio: nome, foto e prezzo
+  const urlInput = sheet.querySelector('input[name="url"]'), fetchBtn = sheet.querySelector('#link-fetch'), hint = sheet.querySelector('#link-hint');
+  async function fillFromLink() {
+    const url = (urlInput?.value || '').trim();
+    if (!/^https?:\/\//i.test(url)) { if (hint) hint.textContent = 'Incolla un link che inizi con https://'; return; }
+    if (!window.SuiteLink) return;
+    if (hint) hint.textContent = 'Leggo il sito…';
+    if (fetchBtn) fetchBtn.disabled = true;
+    const p = await SuiteLink.preview(url);
+    if (fetchBtn) fetchBtn.disabled = false;
+    if (!sheet.open) return;
+    if (!p) { if (hint) hint.textContent = 'Non riesco a leggere questo sito: il link resta salvato, completa tu i dati.'; return; }
+    const f = sheet.querySelector('form');
+    const setIfEmpty = (name, val) => { const el = f?.elements?.[name]; if (el && val && !String(el.value || '').trim()) el.value = val; };
+    setIfEmpty('name', p.title);
+    setIfEmpty('shop', p.publisher);
+    if (p.price) setIfEmpty('expectedPrice', String(p.price));
+    if (p.image && !state.draftPhotos.length) { state.draftPhotos.push({ type: 'web', url: p.image }); renderPhotoPreview(); }
+    if (p.url && urlInput) urlInput.value = p.url;
+    if (hint) hint.textContent = `Dati presi da ${p.publisher || 'sito'}${p.price ? '' : ' (il sito non indica il prezzo)'}.`;
+  }
+  fetchBtn?.addEventListener('click', fillFromLink);
+  urlInput?.addEventListener('paste', () => setTimeout(fillFromLink, 60));
 }
 async function compressImage(file, maxSize = 1200, quality = 0.78) {
   try {
@@ -712,6 +793,11 @@ async function saveItemFromForm(e) {
     photos: state.draftPhotos.map((x) => ({ ...x })),
     createdAt: old?.createdAt || new Date().toISOString(),
     updatedAt: new Date().toISOString(),
+    // v1.13.0 — controllo del prezzo e utilizzi (restano anche modificando l'articolo)
+    priceCheck: old?.priceCheck || null,
+    priceDrop: old?.priceDrop || null,
+    wears: old?.wears || 0,
+    lastWorn: old?.lastWorn || null,
   };
   if (!obj.name) {
     toast('Inserisci il nome');
@@ -737,6 +823,34 @@ async function openDetails(itemId) {
   sheetOpen(
     `${sheetHead(item.name)}${src ? `<img class="detailsphoto" src="${esc(src)}" alt="${esc(item.name)}">` : ''}<div class="detailgrid"><div class="detailbox"><small>Categoria</small><b>${esc(item.category)}</b></div><div class="detailbox"><small>Stagione</small><b>${esc(item.season)} ${esc(item.year)}</b></div><div class="detailbox"><small>Marca</small><b>${esc(item.brand || '—')}</b></div><div class="detailbox"><small>Taglia</small><b>${esc(item.size || '—')}</b></div><div class="detailbox"><small>Colore</small><b>${esc(item.color || '—')}</b></div>${lastBox}</div>${item.purchasedAt ? `<div class="muted" style="font-size:12px;margin-bottom:10px">Acquistato il ${fmtDate(item.purchasedAt)}</div>` : ''}${owned ? '<div class="ownednote">Aggiunto manualmente al tuo guardaroba.</div>' : ''}${item.notes ? `<div class="notes">${esc(item.notes)}</div>` : ''}${item.url && !owned ? `<a class="solidbtn" style="display:block;text-align:center;text-decoration:none;margin-top:10px" href="${esc(item.url)}" target="_blank" rel="noopener">Apri prodotto</a>` : ''}<div class="detailactions">${actions}</div>`,
   );
+  // v1.13.0 — prezzo controllato dal link e utilizzi (costo per utilizzo) per ciò che è nel guardaroba
+  const inWardrobe = owned || (item.status === 'purchased' && item.inWardrobe !== false);
+  let extra = '';
+  if (!inWardrobe && /^https?:\/\//i.test(item.url || '')) {
+    extra += `<div class="pricewatch">${item.priceDrop ? `<p class="drop">📉 Prezzo sceso da <s>${money(item.priceDrop.from)}</s> a <b>${money(item.priceDrop.to)}</b></p>` : item.priceCheck ? `<p>Prezzo sul sito: <b>${money(item.priceCheck.price)}</b></p>` : '<p>Il prezzo sul sito viene controllato una volta al giorno.</p>'}<small>${item.priceCheck ? `Ultimo controllo: ${esc(item.priceCheck.at.split('-').reverse().join('/'))}` : ''}</small><button type="button" class="ghostbtn" id="check-price">Controlla ora</button></div>`;
+  }
+  if (inWardrobe) {
+    const cpw = costPerWear(item);
+    extra += `<div class="wears"><div><b>👕 Indossato ${item.wears || 0} ${item.wears === 1 ? 'volta' : 'volte'}</b><small>${cpw ? `Costo per utilizzo: ${money(cpw)}` : 'Segna ogni volta che lo metti: vedrai quanto ti costa ogni utilizzo.'}${item.lastWorn ? ` · ultima volta ${esc(item.lastWorn.split('-').reverse().join('/'))}` : ''}</small></div><div class="wearbtns"><button type="button" class="ghostbtn" id="wear-minus" aria-label="Togli un utilizzo"${item.wears ? '' : ' disabled'}>−</button><button type="button" class="solidbtn" id="wear-plus">＋1 oggi</button></div></div>`;
+  }
+  if (extra) sheet.querySelector('.detailgrid')?.insertAdjacentHTML('afterend', extra);
+  sheet.querySelector('#check-price')?.addEventListener('click', async (ev) => {
+    ev.currentTarget.disabled = true; ev.currentTarget.textContent = 'Controllo…';
+    const price = await checkItemPrice(item, { quiet: true });
+    toast(price ? (item.priceDrop ? `📉 Prezzo sceso a ${money(price)}` : `Prezzo sul sito: ${money(price)}`) : 'Il sito non indica il prezzo');
+    openDetails(item.id);
+    render();
+  });
+  const wear = async (d) => {
+    item.wears = Math.max(0, (item.wears || 0) + d);
+    if (d > 0) item.lastWorn = todayStr();
+    item.updatedAt = new Date().toISOString();
+    await put('items', item);
+    openDetails(item.id);
+    render();
+  };
+  sheet.querySelector('#wear-plus')?.addEventListener('click', () => wear(1));
+  sheet.querySelector('#wear-minus')?.addEventListener('click', () => wear(-1));
   sheet.querySelector('#edit-item').onclick = () => (owned ? openWardrobeForm(item) : openItemForm(item));
   sheet.querySelector('#duplicate-item')?.addEventListener('click', () => duplicateItem(item));
   sheet.querySelector('#mark-purchased')?.addEventListener('click', () => purchaseDialog(item));

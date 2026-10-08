@@ -635,7 +635,7 @@ main {
   padding: 0;
   flex-shrink: 0;
 }
-@keyframes toastin{
+@keyframes toastin {
   from {
     opacity: 0;
     transform: translate(-50%, 8px);
@@ -949,10 +949,6 @@ main {
   content: '';
   flex: 0 0 6px;
 }
-.filters {
-  -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 28px), transparent);
-  mask-image: linear-gradient(90deg, #000 calc(100% - 28px), transparent);
-}
 /* Ricerca e ordinamento coordinati; 16px evita lo zoom automatico di iOS. */
 .searchbar input, .searchbar select {
   font-size: 16px !important;
@@ -1102,9 +1098,6 @@ main {
   background: none !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
-}
-.brandrow > div {
-  display: none !important;
 }
 .brandrow {
   padding: 0 !important;
@@ -1324,4 +1317,152 @@ html:not(.is-scrolled) #app::before {
 .ask-dialog::backdrop {
   -webkit-backdrop-filter: blur(6px);
   backdrop-filter: blur(6px);
+}
+/* v1.13.0 — Filtri: si capisce che la riga scorre (sfumatura a destra e margine finale) */
+.filters {
+  -webkit-mask-image: linear-gradient(90deg, #000 0, #000 calc(100% - 34px), transparent);
+  mask-image: linear-gradient(90deg, #000 0, #000 calc(100% - 34px), transparent);
+  padding-right: 28px !important;
+  scroll-padding-right: 28px;
+}
+.filters.at-end {
+  -webkit-mask-image: none;
+  mask-image: none;
+}
+/* v1.13.0 — Suite: titolo di pagina piccolo e uniforme (torna visibile) */
+.brandrow > div {
+  display: block !important;
+}
+.brandrow .eyebrow {
+  display: none !important;
+}
+.brandrow h1,
+#screen-title {
+  margin: 8px 0 4px !important;
+  padding: 0 16px !important;
+  font-size: 22px !important;
+  font-weight: 800 !important;
+  letter-spacing: -.4px !important;
+  line-height: 1.15 !important;
+}
+/* Suite: etichette dei riquadri in alto leggibili (niente maiuscolo minuscolo a 10 px) */
+html body .metric small {
+  font-size: 12px !important;
+  text-transform: none !important;
+  letter-spacing: 0 !important;
+  font-weight: 600 !important;
+}
+
+/* v1.13.0 — Link del negozio, prezzo sceso, costo per utilizzo, statistiche in Acquistati */
+.st-linkrow {
+  display: flex;
+  gap: 8px;
+}
+.st-linkrow input {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.st-linkbtn {
+  flex: none;
+  white-space: nowrap;
+}
+.st-linkhint {
+  display: block;
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.dropbadge {
+  position: absolute;
+  right: 8px;
+  top: 8px;
+  z-index: 2;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: #1f7a62;
+  color: #fff;
+  font-size: 11.5px;
+  font-weight: 800;
+  box-shadow: 0 4px 12px -4px rgba(0,0,0,.5);
+}
+.itemcard .thumb {
+  position: relative;
+}
+.cpw {
+  margin-top: 2px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #3fb38e;
+}
+.pricewatch,
+.wears {
+  margin: 12px 0 4px;
+  padding: 12px;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--text) 5%, transparent);
+  border: 1px solid color-mix(in srgb, var(--text) 9%, transparent);
+}
+.pricewatch p {
+  margin: 0 0 4px;
+  font-size: 14px;
+}
+.pricewatch .drop b {
+  color: #3fb38e;
+}
+.pricewatch small {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.wears {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.wears > div:first-child {
+  flex: 1 1 auto;
+  display: grid;
+  gap: 3px;
+}
+.wears b {
+  font-size: 14.5px;
+}
+.wears small {
+  font-size: 12px;
+  color: var(--muted);
+}
+.wearbtns {
+  display: flex;
+  gap: 6px;
+}
+.wearbtns button {
+  min-height: 40px;
+  white-space: nowrap;
+  padding-left: 12px !important;
+  padding-right: 12px !important;
+}
+.st-stats > summary {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  cursor: pointer;
+  list-style: none;
+}
+.st-stats > summary::-webkit-details-marker {
+  display: none;
+}
+.st-stats > summary h3 {
+  margin: 0;
+}
+.st-stats > summary::after {
+  content: "▾";
+  margin-left: auto;
+  color: var(--muted);
+}
+.st-stats[open] > summary::after {
+  content: "▴";
+}
+.st-stats[open] > summary {
+  margin-bottom: 10px;
 }
