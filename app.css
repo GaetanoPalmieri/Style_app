@@ -60,7 +60,7 @@ button {
   gap: 12px;
 }
 .eyebrow {
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.18em;
   color: var(--accent);
   font-weight: 800;
@@ -188,7 +188,7 @@ main {
 }
 .ghostbtn.small, .solidbtn.small {
   padding: 8px 10px;
-  font-size: 12px;
+  font-size: 13px;
 }
 .muted {
   color: var(--muted);
@@ -209,14 +209,14 @@ main {
 .metric small {
   display: block;
   color: var(--muted);
-  font-size: 10px;
+  font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
 .metric b {
   display: block;
   margin-top: 5px;
-  font-size: 16px;
+  font-size: 17px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -244,13 +244,13 @@ main {
   font-size: 11px;
 }
 .budgetinfo b {
-  font-size: 18px;
+  font-size: 17px;
   line-height: 1.2;
   font-weight: 800;
 }
 .budgetinfo b.unset {
   color: var(--muted);
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 700;
   font-style: italic;
 }
@@ -293,7 +293,7 @@ main {
 .filters button {
   border-radius: 999px;
   padding: 8px 11px;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
   white-space: nowrap;
 }
@@ -335,7 +335,7 @@ main {
   padding: 10px;
 }
 .itemtitle {
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 800;
   line-height: 1.2;
   display: -webkit-box;
@@ -362,7 +362,7 @@ main {
   border: 1px solid rgba(255, 255, 255, 0.12);
   padding: 5px 8px;
   border-radius: 999px;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 800;
 }
 .priority-high {
@@ -387,7 +387,7 @@ main {
   background: rgba(16, 19, 24, 0.86);
   padding: 5px 7px;
   border-radius: 999px;
-  font-size: 10px;
+  font-size: 11px;
   color: #d7e3df;
 }
 .empty {
@@ -437,7 +437,7 @@ main {
   z-index: 3;
 }
 .sheethead h2 {
-  font-size: 19px;
+  font-size: 17px;
   margin: 0;
 }
 .closebtn {
@@ -558,7 +558,7 @@ main {
 .detailbox small {
   display: block;
   color: var(--muted);
-  font-size: 10px;
+  font-size: 11px;
 }
 .detailbox b {
   display: block;
@@ -595,7 +595,7 @@ main {
 }
 .morecard p {
   margin: 0 0 10px;
-  font-size: 12px;
+  font-size: 13px;
   color: var(--muted);
   line-height: 1.45;
 }
@@ -678,7 +678,7 @@ main {
   border: 1px solid var(--line);
   border-radius: 14px;
   color: var(--text);
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 700;
 }
 .statrow {
@@ -754,7 +754,7 @@ main {
   font-weight: 800;
   border-radius: 9px;
   padding: 7px 11px;
-  font-size: 12px;
+  font-size: 13px;
   flex-shrink: 0;
 }
 @media (max-width: 390px) {
@@ -777,7 +777,7 @@ main {
     gap: 14px;
   }
   .page-tabs button {
-    font-size: 12px;
+    font-size: 13px;
   }
 }
 @media (min-width: 700px) {
@@ -806,7 +806,7 @@ main {
   margin-bottom: 12px;
 }
 .sheetformhead h2 {
-  font-size: 19px;
+  font-size: 17px;
   margin: 0;
   min-width: 0;
 }
@@ -817,7 +817,7 @@ main {
 }
 .sheetformactions .ghostbtn, .sheetformactions .solidbtn {
   padding: 9px 11px;
-  font-size: 12px;
+  font-size: 13px;
   min-height: 38px;
 }
 .photoactions.two {
@@ -841,7 +841,7 @@ main {
   min-width: 0;
 }
 .wardrobe-intro b {
-  font-size: 14px;
+  font-size: 15px;
 }
 .wardrobe-intro span {
   font-size: 11px;
@@ -864,7 +864,7 @@ main {
   border-radius: 11px;
   padding: 9px 10px;
   margin-bottom: 10px;
-  font-size: 12px;
+  font-size: 13px;
 }
 @media (max-width: 390px) {
   .sheetformhead {
@@ -897,7 +897,7 @@ main {
   color: #dec999;
   border-radius: 11px;
   padding: 10px 11px;
-  font-size: 12px;
+  font-size: 13px;
   line-height: 1.4;
 }
 /* v1.2.1 — Review grafica */
@@ -913,14 +913,14 @@ main {
     padding: 10px !important;
   }
   .metric b {
-    font-size: 14px !important;
+    font-size: 15px !important;
   }
 }
 /* Stagione e anno: stessa altezza, stesso testo, allineati. */
 .toolbar select, .toolbar input {
   height: 48px;
   min-height: 48px;
-  font-size: 16px;
+  font-size: 17px;
   line-height: 1.2;
   padding: 0 12px;
   box-sizing: border-box;
@@ -951,15 +951,15 @@ main {
 }
 /* Ricerca e ordinamento coordinati; 16px evita lo zoom automatico di iOS. */
 .searchbar input, .searchbar select {
-  font-size: 16px !important;
+  font-size: 17px !important;
   font-weight: 500 !important;
 }
 /* Messaggi "vuoto" più discreti. */
 .empty {
-  font-size: 14px;
+  font-size: 15px;
 }
 .empty b {
-  font-size: 16px;
+  font-size: 17px;
 }
 /* v1.3.0 — Dialogo di conferma in-app */
 .ask-dialog {
@@ -973,7 +973,7 @@ main {
 }
 .ask-dialog .ask-msg {
   margin: 0 0 18px;
-  font-size: 16px;
+  font-size: 17px;
   line-height: 1.45;
 }
 .ask-dialog .ask-actions {
@@ -1064,7 +1064,7 @@ main {
   align-items: center;
   gap: 8px;
   font-weight: 700;
-  font-size: 14px;
+  font-size: 15px;
   color: var(--text);
 }
 .moredetails > summary::-webkit-details-marker {
@@ -1082,7 +1082,7 @@ main {
 .moredetails > summary small {
   font-weight: 500;
   color: var(--muted);
-  font-size: 12px;
+  font-size: 13px;
 }
 .moredetails .formgrid {
   padding: 2px 0 12px;
@@ -1347,7 +1347,7 @@ html:not(.is-scrolled) #app::before {
 }
 /* Suite: etichette dei riquadri in alto leggibili (niente maiuscolo minuscolo a 10 px) */
 html body .metric small {
-  font-size: 12px !important;
+  font-size: 13px !important;
   text-transform: none !important;
   letter-spacing: 0 !important;
   font-weight: 600 !important;
@@ -1369,7 +1369,7 @@ html body .metric small {
 .st-linkhint {
   display: block;
   margin-top: 6px;
-  font-size: 12px;
+  font-size: 13px;
   color: var(--muted);
 }
 .dropbadge {
@@ -1381,7 +1381,7 @@ html body .metric small {
   border-radius: 999px;
   background: #1f7a62;
   color: #fff;
-  font-size: 11.5px;
+  font-size: 11px;
   font-weight: 800;
   box-shadow: 0 4px 12px -4px rgba(0,0,0,.5);
 }
@@ -1390,7 +1390,7 @@ html body .metric small {
 }
 .cpw {
   margin-top: 2px;
-  font-size: 11.5px;
+  font-size: 11px;
   font-weight: 600;
   color: #3fb38e;
 }
@@ -1404,7 +1404,7 @@ html body .metric small {
 }
 .pricewatch p {
   margin: 0 0 4px;
-  font-size: 14px;
+  font-size: 15px;
 }
 .pricewatch .drop b {
   color: #3fb38e;
@@ -1412,7 +1412,7 @@ html body .metric small {
 .pricewatch small {
   display: block;
   margin-bottom: 8px;
-  font-size: 12px;
+  font-size: 13px;
   color: var(--muted);
 }
 .wears {
@@ -1426,10 +1426,10 @@ html body .metric small {
   gap: 3px;
 }
 .wears b {
-  font-size: 14.5px;
+  font-size: 15px;
 }
 .wears small {
-  font-size: 12px;
+  font-size: 13px;
   color: var(--muted);
 }
 .wearbtns {

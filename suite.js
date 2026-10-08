@@ -578,14 +578,202 @@
   function update() {
     ticking = false;
     var cur = y(), root = document.documentElement;
-    if (cur < 80) root.classList.remove('suite-fab-mini');
-    else if (cur > last + 6) root.classList.add('suite-fab-mini');
-    else if (cur < last - 6) root.classList.remove('suite-fab-mini');
+    /* Soglie basse di proposito: basta un dito di scorrimento perché si rimpicciolisca.
+       Per tornare grande serve un po' più di risalita, così non lampeggia. */
+    if (cur < 12) root.classList.remove('suite-fab-mini');
+    else if (cur > last + 1) root.classList.add('suite-fab-mini');
+    else if (cur < last - 8) root.classList.remove('suite-fab-mini');
     last = cur;
   }
   window.addEventListener('scroll', function () {
     if (!ticking) { ticking = true; requestAnimationFrame(update); }
   }, { passive: true });
+})();
+
+/* ===================== SuiteSelect — menu a tendina fatti in casa =====================
+   Al posto della rotellina di iOS apre un elenco disegnato come il resto dell'app.
+   Vale per ogni <select> a scelta singola, anche creato dopo; per lasciare il menu di
+   sistema su un singolo menu basta aggiungergli l'attributo data-native. */
+(function () {
+  var openState = null;
+
+  function labelOf(sel) {
+    if (sel.getAttribute('aria-label')) return sel.getAttribute('aria-label');
+    if (sel.id) {
+      var l = document.querySelector('label[for="' + (window.CSS && CSS.escape ? CSS.escape(sel.id) : sel.id) + '"]');
+      if (l) return l.textContent.trim();
+    }
+    var p = sel.closest('label');
+    if (p) return p.textContent.replace(sel.textContent, '').trim();
+    return 'Scegli';
+  }
+
+  function close() {
+    if (!openState) return;
+    var st = openState;
+    openState = null;
+    st.wrap.classList.remove('show');
+    document.removeEventListener('keydown', onKeyDown, true);
+    setTimeout(function () {
+      try { if (st.wrap.open) st.wrap.close(); } catch (_) {}
+      st.wrap.remove();
+    }, 200);
+  }
+
+  function onKeyDown(e) {
+    if (e.key === 'Escape') { e.preventDefault(); close(); }
+  }
+
+  function choose(sel, idx) {
+    close();
+    if (sel.selectedIndex === idx) return;
+    sel.selectedIndex = idx;
+    sel.dispatchEvent(new Event('input', { bubbles: true }));
+    sel.dispatchEvent(new Event('change', { bubbles: true }));
+  }
+
+  function openFor(sel) {
+    close();
+    /* è un <dialog>: così resta sopra anche ai pannelli che sono già <dialog> (Style Wishlist) */
+    var wrap = document.createElement('dialog');
+    wrap.className = 'ss-wrap';
+    var sheet = document.createElement('div');
+    sheet.className = 'ss-sheet';
+    sheet.setAttribute('role', 'listbox');
+    sheet.setAttribute('aria-label', labelOf(sel));
+    var head = document.createElement('div');
+    head.className = 'ss-head';
+    head.textContent = labelOf(sel);
+    sheet.appendChild(head);
+    var list = document.createElement('div');
+    list.className = 'ss-list';
+
+    var opts = sel.options, selectedBtn = null;
+    for (var i = 0; i < opts.length; i++) {
+      var o = opts[i];
+      if (o.parentElement && o.parentElement.tagName === 'OPTGROUP' &&
+          (i === 0 || opts[i - 1].parentElement !== o.parentElement)) {
+        var g = document.createElement('div');
+        g.className = 'ss-group';
+        g.textContent = o.parentElement.label || '';
+        list.appendChild(g);
+      }
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'ss-opt' + (i === sel.selectedIndex ? ' active' : '');
+      b.setAttribute('role', 'option');
+      b.setAttribute('aria-selected', i === sel.selectedIndex ? 'true' : 'false');
+      if (o.disabled) b.disabled = true;
+      b.innerHTML = '<span></span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12.5l5 5L20 6.5"/></svg>';
+      b.firstChild.textContent = o.textContent;
+      b.dataset.i = String(i);
+      list.appendChild(b);
+      if (i === sel.selectedIndex) selectedBtn = b;
+    }
+    sheet.appendChild(list);
+    wrap.appendChild(sheet);
+    document.body.appendChild(wrap);
+
+    list.addEventListener('click', function (e) {
+      var b = e.target.closest('.ss-opt');
+      if (!b || b.disabled) return;
+      choose(sel, Number(b.dataset.i));
+    });
+    wrap.addEventListener('click', function (e) { if (e.target === wrap) close(); });
+
+    wrap.addEventListener('cancel', function (e) { e.preventDefault(); close(); });
+    openState = { wrap: wrap, sel: sel };
+    document.addEventListener('keydown', onKeyDown, true);
+    try { wrap.showModal(); } catch (_) { wrap.setAttribute('open', ''); }
+    requestAnimationFrame(function () {
+      wrap.classList.add('show');
+      if (selectedBtn && selectedBtn.scrollIntoView) selectedBtn.scrollIntoView({ block: 'center' });
+    });
+  }
+
+  function target(e) {
+    var el = e.target && e.target.closest ? e.target.closest('select') : null;
+    if (!el || el.multiple || el.disabled || el.hasAttribute('data-native') || el.size > 1) return null;
+    return el;
+  }
+
+  /* iOS apre il menu al tocco: blocchiamo tutte le strade e apriamo il nostro elenco. */
+  ['pointerdown', 'mousedown', 'touchstart'].forEach(function (ev) {
+    document.addEventListener(ev, function (e) {
+      var sel = target(e);
+      if (!sel) return;
+      if (e.cancelable) e.preventDefault();
+      e.stopPropagation();
+    }, { capture: true, passive: false });
+  });
+  document.addEventListener('click', function (e) {
+    var sel = target(e);
+    if (!sel) return;
+    e.preventDefault();
+    e.stopPropagation();
+    try { sel.blur(); } catch (_) {}
+    openFor(sel);
+  }, true);
+  document.addEventListener('keydown', function (e) {
+    var sel = target(e);
+    if (!sel) return;
+    if (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      openFor(sel);
+    }
+  }, true);
+  window.addEventListener('pagehide', close);
+})();
+
+/* ===================== SuiteTap — aree da toccare di almeno 44 px =====================
+   I pulsanti piccoli restano piccoli da vedere, ma prendono il tocco anche poco fuori dal
+   bordo. L'allargamento è invisibile e al massimo di 10 px per lato, così due pulsanti
+   vicini non si rubano il tocco. Per escludere un pulsante: attributo data-no-tap. */
+(function () {
+  var SEL = 'button, [role="button"], .iconbtn, .pill-btn, .chip, a.btn, label.switch';
+  var MIN = 44, MAXGROW = 20;
+
+  function pad(el) {
+    if (el.hasAttribute('data-no-tap') || el.closest('.ss-sheet, .lp-popup')) return;
+    var r = el.getBoundingClientRect();
+    if (!r.width || !r.height) return;
+    var dx = Math.max(0, Math.min(MIN - r.width, MAXGROW)) / 2;
+    var dy = Math.max(0, Math.min(MIN - r.height, MAXGROW)) / 2;
+    el.dataset.suiteTap = '1';
+    if (dx < 1 && dy < 1) { el.classList.remove('suite-tap'); return; }
+    /* se il pulsante usa già ::after per una spunta o un pallino, lo lasciamo stare */
+    var after = getComputedStyle(el, '::after').content;
+    if (after && after !== 'none' && after !== 'normal') return;
+    if (getComputedStyle(el).position === 'static') el.style.position = 'relative';
+    el.style.setProperty('--suite-tap-x', (-dx) + 'px');
+    el.style.setProperty('--suite-tap-y', (-dy) + 'px');
+    el.classList.add('suite-tap');
+  }
+
+  /* Di norma si misurano solo i pulsanti nuovi; dopo un cambio di larghezza si rimisura tutto. */
+  var NEW = SEL.split(', ').map(function (s) { return s + ':not([data-suite-tap])'; }).join(', ');
+  var timer = null, full = true;
+  function sweep() {
+    timer = null;
+    var list = document.querySelectorAll(full ? SEL : NEW);
+    full = false;
+    for (var i = 0; i < list.length; i++) { try { pad(list[i]); } catch (_) {} }
+  }
+  function schedule() {
+    if (timer) return;
+    timer = setTimeout(function () {
+      if (window.requestIdleCallback) requestIdleCallback(sweep, { timeout: 500 });
+      else sweep();
+    }, 260);
+  }
+
+  function start() {
+    sweep();
+    new MutationObserver(schedule).observe(document.body, { childList: true, subtree: true });
+    window.addEventListener('resize', function () { full = true; schedule(); }, { passive: true });
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+  else start();
 })();
 
 /* ===================== Tieni premuto (Bilancio e Noi Due) =====================
@@ -616,7 +804,7 @@ function bindLongPress(el,handler){
 /* ===================== SuiteLink — dati di un prodotto da un link =====================
    SuiteLink.preview(url) → {title, image, price, publisher, url} oppure null.
    Il browser non può leggere le pagine di altri siti: passa da Microlink (gratuito, senza chiave).
-   Usato da Style Wishlist (Noi Due ha la sua copia, identica). */
+   Usato da Style Wishlist e da Noi Due. */
 (function () {
   function cleanTitle(title, publisher) {
     var t = String(title || '').replace(/\s+/g, ' ').trim();

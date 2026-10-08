@@ -1,4 +1,4 @@
-const APP_VERSION = '1.13.0';
+const APP_VERSION = '1.14.0';
 const DB_NAME = 'style-wishlist-db';
 const DB_VERSION = 1;
 const BACKUP_REMINDER_DAYS = 30;
@@ -503,7 +503,7 @@ async function renderWardrobe() {
 function statsHtml() {
   const purchased = state.items.filter((i) => i.status === 'purchased');
   if (!purchased.length)
-    return '<p class="muted" style="font-size:12px">Nessun acquisto registrato ancora.</p>';
+    return '<p class="muted" style="font-size:13px">Nessun acquisto registrato ancora.</p>';
   const totalAll = purchased.reduce((s, i) => s + (Number(i.paidPrice) || Number(i.expectedPrice) || 0), 0);
   const thisYear = String(new Date().getFullYear());
   const totalYear = purchased
@@ -821,7 +821,7 @@ async function openDetails(itemId) {
     : `<div class="detailbox"><small>${item.status === 'purchased' ? 'Pagato' : 'Prezzo previsto'}</small><b>${money(item.status === 'purchased' ? (item.paidPrice ?? item.expectedPrice) : item.expectedPrice)}</b></div>`;
   const actions = `<button class="ghostbtn${owned ? ' full' : ''}" id="edit-item">Modifica</button>${owned ? '' : '<button class="ghostbtn" id="duplicate-item">Duplica</button>'}${!['purchased', 'owned'].includes(item.status) ? '<button class="solidbtn full" id="mark-purchased">Acquista</button>' : ''}${item.status === 'purchased' ? `<button class="ghostbtn full" id="toggle-wardrobe">${item.inWardrobe === false ? 'Aggiungi al guardaroba' : 'Rimuovi dal guardaroba'}</button>` : ''}<button class="dangerbtn full" id="delete-item">Elimina</button>`;
   sheetOpen(
-    `${sheetHead(item.name)}${src ? `<img class="detailsphoto" src="${esc(src)}" alt="${esc(item.name)}">` : ''}<div class="detailgrid"><div class="detailbox"><small>Categoria</small><b>${esc(item.category)}</b></div><div class="detailbox"><small>Stagione</small><b>${esc(item.season)} ${esc(item.year)}</b></div><div class="detailbox"><small>Marca</small><b>${esc(item.brand || '—')}</b></div><div class="detailbox"><small>Taglia</small><b>${esc(item.size || '—')}</b></div><div class="detailbox"><small>Colore</small><b>${esc(item.color || '—')}</b></div>${lastBox}</div>${item.purchasedAt ? `<div class="muted" style="font-size:12px;margin-bottom:10px">Acquistato il ${fmtDate(item.purchasedAt)}</div>` : ''}${owned ? '<div class="ownednote">Aggiunto manualmente al tuo guardaroba.</div>' : ''}${item.notes ? `<div class="notes">${esc(item.notes)}</div>` : ''}${item.url && !owned ? `<a class="solidbtn" style="display:block;text-align:center;text-decoration:none;margin-top:10px" href="${esc(item.url)}" target="_blank" rel="noopener">Apri prodotto</a>` : ''}<div class="detailactions">${actions}</div>`,
+    `${sheetHead(item.name)}${src ? `<img class="detailsphoto" src="${esc(src)}" alt="${esc(item.name)}">` : ''}<div class="detailgrid"><div class="detailbox"><small>Categoria</small><b>${esc(item.category)}</b></div><div class="detailbox"><small>Stagione</small><b>${esc(item.season)} ${esc(item.year)}</b></div><div class="detailbox"><small>Marca</small><b>${esc(item.brand || '—')}</b></div><div class="detailbox"><small>Taglia</small><b>${esc(item.size || '—')}</b></div><div class="detailbox"><small>Colore</small><b>${esc(item.color || '—')}</b></div>${lastBox}</div>${item.purchasedAt ? `<div class="muted" style="font-size:13px;margin-bottom:10px">Acquistato il ${fmtDate(item.purchasedAt)}</div>` : ''}${owned ? '<div class="ownednote">Aggiunto manualmente al tuo guardaroba.</div>' : ''}${item.notes ? `<div class="notes">${esc(item.notes)}</div>` : ''}${item.url && !owned ? `<a class="solidbtn" style="display:block;text-align:center;text-decoration:none;margin-top:10px" href="${esc(item.url)}" target="_blank" rel="noopener">Apri prodotto</a>` : ''}<div class="detailactions">${actions}</div>`,
   );
   // v1.13.0 — prezzo controllato dal link e utilizzi (costo per utilizzo) per ciò che è nel guardaroba
   const inWardrobe = owned || (item.status === 'purchased' && item.inWardrobe !== false);

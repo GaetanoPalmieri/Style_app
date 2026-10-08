@@ -1,0 +1,17 @@
+VERSIONE 1.14.0
+
+Menu a tendina
+- Toccandoli non si apre più la rotellina di iOS ma un elenco disegnato come l'app.
+  Funziona anche dentro i pannelli (categoria, stagione, priorità, ordinamento):
+  l'elenco si apre sopra al pannello.
+
+Testi
+- Tutte le dimensioni sono ora sui sei valori della suite: 11 - 13 - 15 - 17 - 22 - 34 px.
+
+Pulsanti
+- Ogni pulsante piccolo prende il tocco anche un po' fuori dal bordo (fino a 44 px),
+  senza cambiare il disegno.
+
+Pulsante "+"
+- Si rimpicciolisce appena sfiori lo scorrimento e da piccolo si tiene più lontano
+  dall'angolo in basso a destra.
