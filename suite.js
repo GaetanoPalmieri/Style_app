@@ -568,6 +568,28 @@
   };
 })();
 
+/* ===================== Versione dell'app scritta in pagina =====================
+   Ogni <span data-app-version></span> prende il numero dal <meta name="app-version">
+   in cima a index.html, che rilascio.py tiene sempre aggiornato. Così la riga
+   "Versione …" in fondo alla scheda Altro non resta mai vuota. */
+(function () {
+  function fill() {
+    var m = document.querySelector('meta[name="app-version"]');
+    var v = m && m.content ? m.content.trim() : '';
+    if (!v) return;
+    var list = document.querySelectorAll('[data-app-version]');
+    for (var i = 0; i < list.length; i++) list[i].textContent = v;
+  }
+  window.SuiteVersion = { text: function () {
+    var m = document.querySelector('meta[name="app-version"]');
+    return m && m.content ? m.content.trim() : '';
+  }, fill: fill };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', fill);
+  else fill();
+  /* Se una scheda viene ridisegnata dopo, il numero torna comunque al suo posto. */
+  window.addEventListener('load', fill);
+})();
+
 /* ===================== SuiteUI — comportamenti grafici comuni =====================
    Pulsante "+" che si rimpicciolisce scorrendo verso il basso (così non copre importi e
    righe) e torna grande appena si risale o si arriva in cima. Vale per tutte le app:
