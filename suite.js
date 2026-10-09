@@ -857,3 +857,341 @@ function bindLongPress(el,handler){
   }
   window.SuiteLink = { preview: preview, cleanTitle: cleanTitle };
 })();
+
+/* ===================== SuiteLock — apertura con Face ID =====================
+   Blocca l'app finché non ti riconosce il telefono. Usa le "passkey" (WebAuthn):
+   il riconoscimento lo fa iOS, l'app non vede mai il tuo volto né conserva nulla
+   del Face ID — riceve solo un sì o un no.
+   - si sblocca all'avvio e quando torni dopo più di 2 minuti in un'altra app;
+   - se il riconoscimento non c'è o fallisce, resta il codice di 6 cifre;
+   - si accende dalle impostazioni di ogni app (scheda "Apertura protetta").
+   Attenzione, è una serratura sulla porta, non una cassaforte: i dati restano
+   dove sono. Serve a non far leggere i tuoi conti a chi ha in mano il telefono. */
+(function () {
+  var APP = (document.querySelector('meta[name="apple-mobile-web-app-title"]') || {}).content
+    || (document.title || 'App').split('·')[0].trim();
+  var KEY = 'suite_lock_' + APP.toLowerCase().replace(/[^a-z0-9]/g, '');
+  var GRACE = 120000; /* 2 minuti fuori dall'app prima di richiedere lo sblocco */
+  var cfg = null, locked = false, overlay = null, hiddenAt = 0, busy = false;
+
+  /* Subito, prima che la pagina si disegni: se il blocco è acceso l'app resta coperta,
+     così non si vede un lampo di dati prima dello sblocco. */
+  try {
+    var early = JSON.parse(localStorage.getItem(KEY) || 'null');
+    if (early && early.on) document.documentElement.classList.add('suite-locked');
+  } catch (e) {}
+
+  function read() {
+    if (cfg) return cfg;
+    try { cfg = JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (e) { cfg = null; }
+    if (!cfg || typeof cfg !== 'object') cfg = { on: false, credId: '', pin: '', salt: '' };
+    return cfg;
+  }
+  function write() {
+    try { localStorage.setItem(KEY, JSON.stringify(cfg)); } catch (e) {}
+  }
+  function b64(buf) {
+    var b = new Uint8Array(buf), s = '';
+    for (var i = 0; i < b.length; i++) s += String.fromCharCode(b[i]);
+    return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  }
+  function unb64(str) {
+    var s = String(str).replace(/-/g, '+').replace(/_/g, '/');
+    while (s.length % 4) s += '=';
+    var bin = atob(s), out = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+    return out;
+  }
+  function rand(n) { return crypto.getRandomValues(new Uint8Array(n)); }
+
+  /* Il codice non viene salvato: si salva solo la sua impronta. */
+  async function hashPin(pin, saltB64) {
+    var salt = unb64(saltB64);
+    var key = await crypto.subtle.importKey('raw', new TextEncoder().encode(pin), 'PBKDF2', false, ['deriveBits']);
+    var bits = await crypto.subtle.deriveBits({ name: 'PBKDF2', salt: salt, iterations: 120000, hash: 'SHA-256' }, key, 256);
+    return b64(bits);
+  }
+
+  async function faceIdAvailable() {
+    try {
+      if (!window.PublicKeyCredential || !navigator.credentials) return false;
+      if (!window.isSecureContext) return false;
+      return await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+    } catch (e) { return false; }
+  }
+
+  /* Registra il riconoscimento su questo telefono. */
+  async function enroll() {
+    var c = read();
+    var cred = await navigator.credentials.create({
+      publicKey: {
+        challenge: rand(32),
+        rp: { name: APP, id: location.hostname },
+        user: { id: rand(16), name: APP, displayName: APP },
+        pubKeyCredParams: [{ type: 'public-key', alg: -7 }, { type: 'public-key', alg: -257 }],
+        authenticatorSelection: { authenticatorAttachment: 'platform', residentKey: 'preferred', userVerification: 'required' },
+        timeout: 60000,
+        attestation: 'none'
+      }
+    });
+    if (!cred) throw new Error('niente');
+    c.credId = b64(cred.rawId);
+    write();
+    return true;
+  }
+  /* Chiede il riconoscimento. Torna true solo se il telefono dice di sì. */
+  async function askFaceId() {
+    var c = read();
+    var opts = { challenge: rand(32), timeout: 60000, userVerification: 'required', rpId: location.hostname };
+    if (c.credId) opts.allowCredentials = [{ type: 'public-key', id: unb64(c.credId), transports: ['internal'] }];
+    var got = await navigator.credentials.get({ publicKey: opts });
+    return !!got;
+  }
+
+  /* ---------- Schermata di sblocco ---------- */
+  function buildOverlay() {
+    var el = document.createElement('div');
+    el.className = 'suite-lock';
+    el.setAttribute('role', 'dialog');
+    el.setAttribute('aria-label', 'App bloccata');
+    el.innerHTML =
+      '<div class="sl-box">' +
+        '<div class="sl-face" aria-hidden="true">' +
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">' +
+          '<path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/>' +
+          '<path d="M9 10v1M15 10v1M12 10v3l-1 1M9 15.5s1.2 1 3 1 3-1 3-1"/></svg>' +
+        '</div>' +
+        '<p class="sl-app"></p>' +
+        '<p class="sl-msg">Sbloccala per vedere i tuoi dati.</p>' +
+        '<button type="button" class="sl-main primary">Sblocca con Face ID</button>' +
+        '<form class="sl-pin" hidden autocomplete="off">' +
+          '<input class="sl-pin-input" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="••••••" aria-label="Codice di 6 cifre">' +
+          '<button type="submit" class="sl-pin-ok primary">Apri</button>' +
+        '</form>' +
+        '<button type="button" class="sl-alt">Usa il codice</button>' +
+      '</div>';
+    return el;
+  }
+  function show() {
+    if (locked) return;
+    locked = true;
+    document.documentElement.classList.add('suite-locked');
+    overlay = buildOverlay();
+    document.body.appendChild(overlay);
+    var box = overlay.querySelector('.sl-box');
+    var main = overlay.querySelector('.sl-main');
+    var alt = overlay.querySelector('.sl-alt');
+    var form = overlay.querySelector('.sl-pin');
+    var input = overlay.querySelector('.sl-pin-input');
+    var msg = overlay.querySelector('.sl-msg');
+    overlay.querySelector('.sl-app').textContent = APP;
+    var c = read();
+    if (!c.credId) { main.hidden = true; alt.hidden = true; form.hidden = false; }
+    if (!c.pin) alt.hidden = true;
+
+    main.addEventListener('click', async function () {
+      if (busy) return; busy = true; main.disabled = true;
+      msg.textContent = 'Guarda il telefono…';
+      try {
+        if (await askFaceId()) { hide(); return; }
+        msg.textContent = 'Non riconosciuto. Riprova o usa il codice.';
+      } catch (e) {
+        msg.textContent = c.pin ? 'Riconoscimento non riuscito: usa il codice.' : 'Riconoscimento non riuscito. Riprova.';
+        if (c.pin) { form.hidden = false; alt.hidden = true; setTimeout(function(){ input.focus(); }, 60); }
+      }
+      busy = false; main.disabled = false;
+    });
+    alt.addEventListener('click', function () {
+      form.hidden = false; alt.hidden = true; main.hidden = true;
+      msg.textContent = 'Scrivi il codice di 6 cifre.';
+      setTimeout(function () { input.focus(); }, 60);
+    });
+    form.addEventListener('submit', async function (e) {
+      e.preventDefault();
+      var v = (input.value || '').replace(/\D/g, '');
+      if (v.length < 4) { msg.textContent = 'Il codice è di 6 cifre.'; return; }
+      var h = await hashPin(v, c.salt);
+      if (h === c.pin) { hide(); return; }
+      input.value = '';
+      msg.textContent = 'Codice sbagliato.';
+      box.classList.remove('sl-shake'); void box.offsetWidth; box.classList.add('sl-shake');
+    });
+    /* su iPhone il riconoscimento parte solo da un tocco: nessun tentativo automatico */
+  }
+  function hide() {
+    locked = false; busy = false;
+    document.documentElement.classList.remove('suite-locked');
+    if (overlay) { overlay.remove(); overlay = null; }
+    hiddenAt = 0;
+  }
+
+  function lockIfNeeded() {
+    var c = read();
+    if (!c.on) return;
+    show();
+  }
+
+  /* ---------- Scheda nelle impostazioni ---------- */
+  function cardHtml(o) {
+    o = o || {};
+    var c = read(), H = o.h || 'h2', cls = o.cls || 'card';
+    var stato = c.on ? 'Attiva: l’app chiede il riconoscimento all’avvio e dopo due minuti in un’altra app.'
+                     : 'Spenta: chiunque abbia il telefono sbloccato può aprire l’app.';
+    return '<div class="' + cls + ' suite-lock-card" data-suite-lock-card="1" data-h="' + H + '" data-cls="' + cls + '">' +
+      '<' + H + '>Apertura protetta</' + H + '>' +
+      '<p class="suite-lock-status"><span class="suite-lock-dot ' + (c.on ? 'on' : 'off') + '" aria-hidden="true"></span>' + stato + '</p>' +
+      (c.on
+        ? '<div class="suite-lock-actions"><button type="button" data-suite-lock="off">Disattiva</button>' +
+          '<button type="button" data-suite-lock="pin">🔢 Cambia codice</button></div>'
+        : '<button type="button" class="primary" data-suite-lock="on">🔒 Attiva Face ID</button>') +
+      '<p class="suite-lock-note">È una serratura sulla porta: impedisce di aprire l’app a chi ha in mano il telefono. I dati restano dove sono.</p>' +
+      '</div>';
+  }
+  function refreshCards() {
+    var list = document.querySelectorAll('[data-suite-lock-card]');
+    for (var i = 0; i < list.length; i++) {
+      var c = list[i];
+      var tmp = document.createElement('div');
+      tmp.innerHTML = cardHtml({ h: c.getAttribute('data-h'), cls: c.getAttribute('data-cls') });
+      c.replaceWith(tmp.firstChild);
+    }
+  }
+  /* Se l'app non ha previsto un posto, la scheda si mette accanto a quella della
+     sincronizzazione: così compare in tutte e cinque senza toccarle una per una. */
+  function place() {
+    if (document.querySelector('[data-suite-lock-card]')) return;
+    var slot = document.querySelector('[data-suite-lock-slot]');
+    var sync = document.querySelector('[data-suite-sync-card]');
+    var host = slot || sync;
+    if (!host) return;
+    var tmp = document.createElement('div');
+    tmp.innerHTML = cardHtml({ h: sync && !slot ? (sync.getAttribute('data-h') || 'h2') : 'h2',
+                               cls: sync && !slot ? (sync.getAttribute('data-cls') || 'card') : 'card' });
+    if (slot) slot.replaceWith(tmp.firstChild); else sync.after(tmp.firstChild);
+  }
+
+  async function askPin(titolo) {
+    var v = prompt(titolo + '\nScrivi 6 cifre (ti servono se il riconoscimento non funziona):', '');
+    if (v === null) return null;
+    v = String(v).replace(/\D/g, '');
+    if (v.length < 4) { alert('Il codice deve avere almeno 4 cifre.'); return null; }
+    return v.slice(0, 6);
+  }
+
+  document.addEventListener('click', async function (e) {
+    var b = e.target.closest && e.target.closest('[data-suite-lock]');
+    if (!b) return;
+    var act = b.getAttribute('data-suite-lock'), c = read();
+    if (act === 'off') {
+      if (!confirm('Disattivo l’apertura protetta?')) return;
+      cfg = { on: false, credId: '', pin: '', salt: '' }; write(); refreshCards();
+      return;
+    }
+    if (act === 'pin') {
+      var p = await askPin('Nuovo codice');
+      if (p == null) return;
+      c.salt = b64(rand(16)); c.pin = await hashPin(p, c.salt); write();
+      alert('Codice aggiornato.');
+      return;
+    }
+    /* accensione */
+    b.disabled = true;
+    try {
+      if (await faceIdAvailable()) {
+        await enroll();
+      } else {
+        alert('Su questo dispositivo non c’è il riconoscimento: userò solo il codice.');
+      }
+      var pin = await askPin('Codice di riserva');
+      if (pin == null) { cfg.credId = ''; write(); b.disabled = false; return; }
+      c = read();
+      c.salt = b64(rand(16)); c.pin = await hashPin(pin, c.salt); c.on = true; write();
+      refreshCards();
+      alert('Fatto: da adesso l’app si apre solo dopo il riconoscimento.');
+    } catch (err) {
+      alert('Non sono riuscito a registrare il riconoscimento. Riprova, oppure lascia solo il codice.');
+    }
+    b.disabled = false;
+  });
+
+  /* ---------- Avvio e rientro ---------- */
+  document.addEventListener('visibilitychange', function () {
+    if (document.hidden) { hiddenAt = Date.now(); return; }
+    if (!read().on || locked) return;
+    if (hiddenAt && Date.now() - hiddenAt > GRACE) show();
+  });
+  function start() { place(); lockIfNeeded(); }
+  if (document.body) start();
+  else document.addEventListener('DOMContentLoaded', start);
+  /* Le app che ridisegnano le impostazioni da sole cancellerebbero la scheda:
+     appena ricompare quella della sincronizzazione, la rimettiamo accanto. */
+  var replaceTimer = null;
+  function watchSettings() {
+    if (!document.body) return;
+    new MutationObserver(function () {
+      if (replaceTimer) return;
+      replaceTimer = setTimeout(function () { replaceTimer = null; try { place(); } catch (e) {} }, 200);
+    }).observe(document.body, { childList: true, subtree: true });
+  }
+  if (document.body) watchSettings();
+  else document.addEventListener('DOMContentLoaded', watchSettings);
+
+  window.SuiteLock = {
+    cardHtml: cardHtml, refresh: refreshCards, lock: show, isOn: function () { return !!read().on; },
+    available: faceIdAvailable
+  };
+})();
+
+/* ===================== SuiteAI — il collegamento al modello =====================
+   Le app non parlano mai direttamente con il modello: la chiave dell'API non può stare
+   dentro una pagina web. Qui si chiama la funzione "suite-ai" su Supabase, che tiene
+   la chiave al sicuro e accetta solo i compiti che conosce.
+   Serve l'accesso alla sincronizzazione; se manca, o se la rete non va, le funzioni
+   tornano null e l'app continua con le sue regole scritte a mano. */
+(function () {
+  var cache = {};           /* stesse domande nella stessa sessione: una sola chiamata */
+  var spento = false;       /* se la funzione non c'è, smettiamo di riprovare */
+
+  function disponibile() {
+    return !spento && !!(window.SuiteSync && SuiteSync.signedIn);
+  }
+  async function ask(task, testo, extra) {
+    if (!disponibile()) return null;
+    extra = extra || {};
+    var k = task + '|' + testo + '|' + JSON.stringify(extra.opzioni || '');
+    if (k in cache) return cache[k];
+    try {
+      var r = await SuiteSync.api('/functions/v1/suite-ai', {
+        method: 'POST',
+        json: { task: task, testo: String(testo || ''), opzioni: extra.opzioni || [], contesto: extra.contesto || {} }
+      });
+      var dati = r && r.ok ? r.dati : null;
+      cache[k] = dati;
+      return dati;
+    } catch (e) {
+      /* 404 = funzione non pubblicata, 401/403 = non abilitata: non insistiamo */
+      if (e && (e.status === 404 || e.status === 401 || e.status === 403)) spento = true;
+      return null;
+    }
+  }
+  /* Sceglie fra un elenco di chiavi. Torna la chiave solo se il modello è convinto. */
+  async function scegli(task, testo, elenco, soglia) {
+    var d = await ask(task, testo, { opzioni: elenco });
+    if (!d || !d.chiave) return null;
+    var ok = elenco.some(function (o) { return (o.chiave || o.key) === d.chiave; });
+    if (!ok) return null;
+    if (typeof d.sicurezza === 'number' && d.sicurezza < (soglia == null ? 0.55 : soglia)) return null;
+    return d.chiave;
+  }
+  window.SuiteAI = {
+    disponibile: disponibile,
+    ask: ask,
+    scegli: scegli,
+    /* Frase libera → movimento. Torna null se non ha capito l'importo. */
+    movimento: async function (frase, opts) {
+      var d = await ask('movimento', frase, opts || {});
+      if (!d || !(Number(d.importo) > 0)) return null;
+      return d;
+    }
+  };
+})();

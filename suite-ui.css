@@ -373,3 +373,134 @@ dialog.ss-wrap::backdrop {
 .mp-row:active {
   background: color-mix(in srgb, var(--ink) 10%, transparent);
 }
+
+/* ---- Apertura protetta: schermata di sblocco e scheda nelle impostazioni ---- */
+html.suite-locked body > *:not(.suite-lock) {
+  filter: blur(18px);
+  pointer-events: none;
+  user-select: none;
+}
+html.suite-locked {
+  overflow: hidden;
+}
+.suite-lock {
+  position: fixed;
+  inset: 0;
+  z-index: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: color-mix(in srgb, var(--suite-bg, #12181f) 86%, transparent);
+  -webkit-backdrop-filter: blur(22px) saturate(1.4);
+  backdrop-filter: blur(22px) saturate(1.4);
+}
+.suite-lock .sl-box {
+  width: 100%;
+  max-width: 320px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  text-align: center;
+  color: var(--suite-text, #f1f5f4);
+}
+.suite-lock .sl-face {
+  width: 64px;
+  height: 64px;
+  display: grid;
+  place-items: center;
+  border-radius: 20px;
+  color: var(--suite-accent-select);
+  background: color-mix(in srgb, var(--suite-accent-select) 16%, transparent);
+}
+.suite-lock .sl-face svg { width: 34px; height: 34px; }
+.suite-lock .sl-app {
+  margin: 4px 0 0;
+  font-size: var(--suite-fs-lg);
+  font-weight: 800;
+  letter-spacing: -.3px;
+}
+.suite-lock .sl-msg {
+  margin: 0 0 6px;
+  font-size: var(--suite-fs-sm);
+  color: var(--suite-text-soft, #9fb0ab);
+  min-height: 2.4em;
+}
+.suite-lock .sl-main,
+.suite-lock .sl-pin-ok {
+  width: 100%;
+  min-height: 46px;
+  border: 0;
+  border-radius: 14px;
+  font: inherit;
+  font-size: var(--suite-fs-md);
+  font-weight: 700;
+  color: #0f1512;
+  background: var(--suite-select-grad);
+}
+.suite-lock .sl-main[hidden],
+.suite-lock .sl-alt[hidden],
+.suite-lock .sl-pin[hidden] { display: none; }
+.suite-lock .sl-pin {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+.suite-lock .sl-pin-input {
+  width: 100%;
+  min-height: 46px;
+  padding: 0 14px;
+  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, var(--suite-text, #fff) 16%, transparent);
+  background: color-mix(in srgb, var(--suite-text, #fff) 7%, transparent);
+  color: inherit;
+  font: inherit;
+  font-size: var(--suite-fs-xl);
+  letter-spacing: 8px;
+  text-align: center;
+}
+.suite-lock .sl-alt {
+  border: 0;
+  background: none;
+  color: var(--suite-accent-select);
+  font: inherit;
+  font-size: var(--suite-fs-sm);
+  font-weight: 700;
+  padding: 6px;
+}
+.suite-lock .sl-shake { animation: slShake .3s ease; }
+@keyframes slShake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-7px); }
+  75% { transform: translateX(7px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .suite-lock .sl-shake { animation: none; }
+}
+.suite-lock-card .suite-lock-status {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: var(--suite-fs-sm);
+}
+.suite-lock-dot {
+  flex: none;
+  width: 9px;
+  height: 9px;
+  margin-top: 5px;
+  border-radius: 999px;
+  background: #8a9490;
+}
+.suite-lock-dot.on { background: var(--suite-accent-select); }
+.suite-lock-card .suite-lock-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.suite-lock-card .suite-lock-note {
+  margin: 8px 0 0;
+  font-size: var(--suite-fs-xs);
+  opacity: .75;
+}

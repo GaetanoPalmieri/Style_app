@@ -1,0 +1,53 @@
+COME ACCENDERE L'AI NELLE APP
+=============================
+
+Tutto passa da una sola funzione su Supabase, chiamata "suite-ai", che vale per
+tutte e cinque le app (hanno lo stesso progetto Supabase).
+
+Perche' una funzione e non il modello chiamato dall'app: la chiave dell'API non puo'
+stare dentro una pagina web, chiunque la leggerebbe guardando il codice sorgente.
+Nella funzione invece vive nei Secrets di Supabase e non esce mai dal server.
+
+
+1) PRENDI LA CHIAVE
+   - Vai su console.anthropic.com, Settings > API keys, "Create key".
+   - Copiala: la vedrai una volta sola.
+   - Metti un tetto di spesa mensile (Billing > Limits): per uso personale bastano
+     pochi euro al mese.
+
+2) METTI LA CHIAVE SU SUPABASE
+   - Supabase > il tuo progetto > Edge Functions > Secrets > "Add new secret".
+   - Nome:  ANTHROPIC_API_KEY      Valore: la chiave appena copiata.
+   - Facoltativi:
+       SUITE_AI_MODEL    per cambiare modello (default claude-haiku-5-5, il piu' economico)
+       SUITE_AI_EMAILS   le email ammesse, separate da virgola (es. tua@mail.it,sua@mail.it)
+
+3) PUBBLICA LA FUNZIONE
+   - Supabase > Edge Functions > "Deploy a new function" > nome esatto: suite-ai
+   - Incolla il contenuto di  _condivisi/supabase/functions/suite-ai/index.ts
+   - Lascia "Verify JWT" ATTIVO: cosi' Supabase scarta da sola le chiamate senza accesso.
+   - Deploy.
+
+4) NELLE APP
+   - Serve l'accesso alla sincronizzazione (la scheda "Sincronizzazione" in Altro):
+     e' quello che identifica te e tua moglie. Senza accesso, l'AI resta spenta e le
+     app continuano con le regole scritte a mano, senza errori.
+
+COSA FA OGGI
+   - Bilancio, pannello "Nuovo movimento": il campo in alto "es. 35 euro spesa alla
+     Coop ieri". Scrivi o detta la frase, tocca la stellina e importo, data, conto e
+     categoria si riempiono da soli. Controlli e salvi.
+   - Bilancio: quando il nome del movimento non assomiglia a niente di gia' visto,
+     la categoria la sceglie il modello invece di lasciare il campo vuoto.
+   - Noi Due: i prodotti finiti in "Altro" vengono rimessi nel reparto giusto quando
+     apri la lista. Si prova una volta sola per prodotto.
+
+QUANTO COSTA
+   - Ogni richiesta e' poche centinaia di parole: con il modello piu' piccolo si parla
+     di frazioni di centesimo. Le stesse domande nella stessa sessione non vengono
+     rifatte due volte.
+
+SE QUALCOSA NON VA
+   - L'app non cambia comportamento: se la funzione non c'e', non risponde o la chiave
+     e' finita, le funzioni AI restano silenziose e valgono le regole di prima.
+   - Per vedere gli errori: Supabase > Edge Functions > suite-ai > Logs.
