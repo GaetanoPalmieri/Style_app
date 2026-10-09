@@ -1,0 +1,5 @@
+VERSIONE 1.17.0
+
+- Messaggi in basso: riquadro di vetro trasparente con pallino verde e pulsante "Annulla"
+  ambra, come in tutte le app.
+- AI: se l'AI non risponde compare il motivo invece di un generico messaggio.

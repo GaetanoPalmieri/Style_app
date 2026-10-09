@@ -1151,6 +1151,50 @@ function bindLongPress(el,handler){
 (function () {
   var cache = {};           /* stesse domande nella stessa sessione: una sola chiamata */
   var spento = false;       /* se la funzione non c'è, smettiamo di riprovare */
+  var ultimoErrore = null;  /* perché l'ultima chiamata non ha portato dati (si mostra all'utente) */
+
+  /* Numeri scritti in tutti i modi: 35 · "35,50" · "€ 1.234,56" · "1,234.56" · "12 euro" */
+  function numero(v) {
+    if (typeof v === 'number') return isFinite(v) ? v : NaN;
+    if (v == null) return NaN;
+    var t = String(v).replace(/[^0-9,.\-]/g, '');
+    if (!t) return NaN;
+    var c = t.lastIndexOf(','), d = t.lastIndexOf('.');
+    if (c >= 0 && d >= 0) t = c > d ? t.replace(/\./g, '').replace(',', '.') : t.replace(/,/g, '');
+    else if (c >= 0) t = /,\d{3}$/.test(t) && t.split(',').length > 2 ? t.replace(/,/g, '') : t.replace(',', '.');
+    else if (d >= 0 && t.split('.').length > 2) t = t.replace(/\.(?=\d{3}(\.|$))/g, '');
+    else if (d >= 0 && /^-?\d{1,3}\.\d{3}$/.test(t)) t = t.replace('.', '');
+    var n = parseFloat(t);
+    return isFinite(n) ? Math.round(n * 100) / 100 : NaN;
+  }
+  /* La funzione può rispondere {ok, dati} oppure direttamente con i dati: accettiamo entrambi. */
+  function estrai(r) {
+    if (!r) return null;
+    if (typeof r === 'string') { try { r = JSON.parse(r); } catch (e) { ultimoErrore = { messaggio: 'risposta non leggibile' }; return null; } }
+    if (r.ok === false) { ultimoErrore = { messaggio: String(r.errore || r.error || r.messaggio || 'la funzione ha risposto con un errore').slice(0, 160) }; return null; }
+    var d = r.dati || r.data || r.risultato || r.result || null;
+    if (!d && typeof r === 'object' && r.ok === undefined) d = r;
+    if (typeof d === 'string') { try { d = JSON.parse(d.replace(/^```(json)?|```$/g, '')); } catch (e) { d = null; } }
+    if (!d || typeof d !== 'object') { ultimoErrore = { messaggio: 'risposta vuota' }; return null; }
+    ultimoErrore = null;
+    return d;
+  }
+  function erroreDa(e) {
+    var st = e && e.status;
+    /* la funzione suite-ai spiega il problema nel campo "error": lo mostriamo così com'è */
+    var m = e && e.message && /"error"\s*:\s*"([^"]+)"/.exec(e.message);
+    if (m) { ultimoErrore = { status: st || 0, messaggio: m[1] }; return; }
+    var msg = st === 404 ? 'la funzione suite-ai non è pubblicata su Supabase'
+      : st === 401 ? 'accesso scaduto: rientra in Altro › Sincronizzazione'
+      : st === 403 ? 'questa email non è abilitata (SUITE_AI_EMAILS)'
+      : st ? ('errore ' + st + (e.message ? ' · ' + String(e.message).replace(/^Errore \d+:?\s*/, '').slice(0, 120) : ''))
+      : 'rete non raggiungibile';
+    ultimoErrore = { status: st || 0, messaggio: msg };
+  }
+  function messaggioErrore(base) {
+    if (!ultimoErrore) return base;
+    return 'L\u2019AI non ha risposto (' + ultimoErrore.messaggio + ').' + (base ? ' ' + base : '');
+  }
 
   function disponibile() {
     return !spento && !!(window.SuiteSync && SuiteSync.signedIn);
@@ -1159,18 +1203,20 @@ function bindLongPress(el,handler){
     if (!disponibile()) return null;
     extra = extra || {};
     var k = task + '|' + testo + '|' + JSON.stringify(extra.opzioni || '');
-    if (k in cache) return cache[k];
+    if (cache[k]) { ultimoErrore = null; return cache[k]; }
+    ultimoErrore = null;
     try {
       var r = await SuiteSync.api('/functions/v1/suite-ai', {
         method: 'POST',
         json: { task: task, testo: String(testo || ''), opzioni: extra.opzioni || [], contesto: extra.contesto || {} }
       });
-      var dati = r && r.ok ? r.dati : null;
-      cache[k] = dati;
+      var dati = estrai(r);
+      if (dati) cache[k] = dati;   /* le risposte vuote non si tengono: un nuovo tentativo riprova davvero */
       return dati;
     } catch (e) {
-      /* 404 = funzione non pubblicata, 401/403 = non abilitata: non insistiamo */
-      if (e && (e.status === 404 || e.status === 401 || e.status === 403)) spento = true;
+      erroreDa(e);
+      /* 404 = funzione non pubblicata: non insistiamo */
+      if (e && e.status === 404) spento = true;
       return null;
     }
   }
@@ -1209,13 +1255,15 @@ function bindLongPress(el,handler){
     extra = extra || {};
     try {
       var im = await fotoInBase64(file, extra.lato);
+      ultimoErrore = null;
       var r = await SuiteSync.api('/functions/v1/suite-ai', {
         method: 'POST',
         json: { task: task, testo: extra.testo || '', opzioni: extra.opzioni || [], contesto: extra.contesto || {}, immagine: im }
       });
-      return r && r.ok ? r.dati : null;
+      return estrai(r);
     } catch (e) {
-      if (e && (e.status === 404 || e.status === 401 || e.status === 403)) spento = true;
+      erroreDa(e);
+      if (e && e.status === 404) spento = true;
       return null;
     }
   }
@@ -1226,10 +1274,23 @@ function bindLongPress(el,handler){
     scegli: scegli,
     daFoto: daFoto,
     fotoInBase64: fotoInBase64,
+    numero: numero,
+    messaggioErrore: messaggioErrore,
+    get ultimoErrore() { return ultimoErrore; },
+    /* Importo da una risposta, qualunque nome abbia il campo e comunque sia scritto. */
+    importoDa: function (d, campi) {
+      if (!d) return NaN;
+      var lista = campi || ['importo', 'totale', 'amount', 'total', 'cifra', 'prezzo'];
+      for (var i = 0; i < lista.length; i++) { var n = numero(d[lista[i]]); if (n > 0) return n; }
+      return NaN;
+    },
     /* Frase libera → movimento. Torna null se non ha capito l'importo. */
     movimento: async function (frase, opts) {
       var d = await ask('movimento', frase, opts || {});
-      if (!d || !(Number(d.importo) > 0)) return null;
+      if (!d) return null;
+      var n = window.SuiteAI.importoDa(d);
+      if (!(n > 0)) { if (!ultimoErrore) ultimoErrore = null; return null; }
+      d.importo = n;
       return d;
     },
     /* Numeri → un paragrafo in italiano. Il contesto lo prepara l'app. */
@@ -1265,8 +1326,9 @@ function bindLongPress(el,handler){
         busy = false; btn.disabled = false;
         if (!wrap.isConnected) return;
         var esito = o.onDati ? o.onDati(d) : null;
-        hint.textContent = esito || (d ? (o.fatto || 'Fatto: controlla e salva.') : (o.niente || 'Non ho capito: scrivilo a mano.'));
-        if (d) inp.value = '';
+        hint.textContent = (!d && ultimoErrore) ? messaggioErrore('Puoi scriverlo a mano qui sotto.')
+          : (esito || (d ? (o.fatto || 'Fatto: controlla e salva.') : (o.niente || 'Non ho capito: scrivilo a mano.')));
+        if (d && !esito) inp.value = '';
       }
       btn.addEventListener('click', vai);
       inp.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); vai(); } });
@@ -1298,7 +1360,8 @@ function bindLongPress(el,handler){
         shot.disabled = pick.disabled = false;
         if (!wrap.isConnected) return;
         var esito = o.onDati ? o.onDati(d, f) : null;
-        hint.textContent = esito || (d ? (o.fatto || 'Fatto: controlla e salva.') : (o.niente || 'Non sono riuscito a leggere la foto.'));
+        hint.textContent = (!d && ultimoErrore) ? messaggioErrore('Puoi scriverlo a mano.')
+          : (esito || (d ? (o.fatto || 'Fatto: controlla e salva.') : (o.niente || 'Non sono riuscito a leggere la foto.')));
       }
       cam.addEventListener('change', function () { leggi(cam); });
       gal.addEventListener('change', function () { leggi(gal); });
