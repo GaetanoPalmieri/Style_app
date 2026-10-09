@@ -8,6 +8,9 @@
      rosso = pericolo / uscite.
    - Testi: scala 11 · 13 · 15 · 17 · 22 · 34 px, mai sotto gli 11 px.
    - Pulsanti: area da toccare di almeno 44 px (anche se il disegno è più piccolo).
+   - Schermi: una sola soglia per tutti gli iPhone moderni, @media (max-width: 480px).
+     Dal 17 (393 px) al 17 Pro Max (440 px) valgono le stesse regole, così cambiando
+     telefono il layout non salta. Sotto i 390 px restano le soglie strette esistenti.
    ===================================================================== */
 :root {
   --suite-fs-xs: 11px;
