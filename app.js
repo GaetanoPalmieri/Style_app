@@ -1,4 +1,4 @@
-const APP_VERSION = '1.15.0';
+const APP_VERSION = '1.16.0';
 const DB_NAME = 'style-wishlist-db';
 const DB_VERSION = 1;
 const BACKUP_REMINDER_DAYS = 30;
@@ -729,8 +729,46 @@ async function addFiles(files) {
     await put('photos', { id: pid, blob, createdAt: new Date().toISOString() });
     state.draftPhotos.push({ type: 'local', id: pid });
     state.draftPhotosNew.add(pid);
+    /* v1.16.0 — Capo dalla foto: alla prima foto, se il nome è ancora vuoto,
+       il modello guarda lo scatto e compila nome, categoria, colore e stagione.
+       Non tocca niente di già scritto: quello che c'è resta. */
+    leggiCapoDallaFoto(file);
   }
   await renderPhotoPreview();
+}
+async function leggiCapoDallaFoto(file) {
+  if (!(window.SuiteAI && SuiteAI.disponibile())) return;
+  const form = sheet.querySelector('#item-form, #wardrobe-form');
+  const nameInput = form?.querySelector('input[name="name"]');
+  if (!nameInput || nameInput.value.trim()) return;
+  const hint = sheet.querySelector('#link-hint');
+  if (hint) hint.textContent = 'Sto guardando la foto…';
+  const d = await SuiteAI.daFoto('capo', file, {
+    opzioni: CATEGORIES.map((c) => ({ chiave: c, nome: c })),
+    contesto: { stagioni: SEASONS },
+  });
+  if (!d || !d.nome || !form.isConnected || nameInput.value.trim()) {
+    if (hint) hint.textContent = 'Incolla il link: nome, foto e prezzo arrivano dal sito.';
+    return;
+  }
+  const set = (sel, val) => { const el = form.querySelector(sel); if (el && !el.value.trim() && val) el.value = val; };
+  nameInput.value = String(d.nome).slice(0, 80);
+  set('input[name="color"]', d.colore);
+  const cat = form.querySelector('select[name="category"]');
+  if (cat && !cat.value) {
+    const scelta = CATEGORIES.find((c) => c.toLowerCase() === String(d.tipo || '').toLowerCase())
+      || CATEGORIES.find((c) => String(d.tipo || '').toLowerCase().includes(c.toLowerCase()));
+    if (scelta) cat.value = scelta;
+  }
+  const sea = form.querySelector('select[name="season"]');
+  if (sea) {
+    const st = SEASONS.find((x) => x.toLowerCase() === String(d.stagione || '').toLowerCase());
+    if (st) sea.value = st;
+  }
+  const note = form.querySelector('textarea[name="notes"]');
+  if (note && !note.value.trim() && Array.isArray(d.tag) && d.tag.length) note.value = d.tag.slice(0, 5).join(', ');
+  if (hint) hint.textContent = 'Nome e dettagli presi dalla foto: controlla e correggi.';
+  toast('Capo letto dalla foto');
 }
 galleryInput.onchange = async () => {
   await addFiles([...galleryInput.files]);

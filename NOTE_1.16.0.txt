@@ -1,0 +1,10 @@
+VERSIONE 1.16.0
+
+Capo dalla foto
+- Nuovo articolo o nuovo capo nel guardaroba: alla prima foto, se il nome e' ancora
+  vuoto, vengono compilati nome, categoria, colore, stagione e qualche tag nelle note
+  guardando lo scatto.
+- Non tocca niente di gia' scritto: se avevi gia' messo il nome, la foto non cambia
+  nulla.
+
+Compare solo con l'AI accesa (vedi GUIDA_AI.txt).

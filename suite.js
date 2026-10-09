@@ -1183,15 +1183,127 @@ function bindLongPress(el,handler){
     if (typeof d.sicurezza === 'number' && d.sicurezza < (soglia == null ? 0.55 : soglia)) return null;
     return d.chiave;
   }
+  /* ---------- Foto ----------
+     La foto viene rimpicciolita e ricompressa prima di partire: una foto da 4 MB
+     diventa 150 KB e il modello legge lo stesso. Meno dati, meno attesa, meno costo. */
+  function fotoInBase64(file, lato) {
+    return new Promise(function (ok, no) {
+      var img = new Image(), url = URL.createObjectURL(file);
+      img.onload = function () {
+        URL.revokeObjectURL(url);
+        var max = lato || 1400;
+        var s = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight));
+        var c = document.createElement('canvas');
+        c.width = Math.round(img.naturalWidth * s);
+        c.height = Math.round(img.naturalHeight * s);
+        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+        var d = c.toDataURL('image/jpeg', 0.82);
+        ok({ tipo: 'image/jpeg', dati: d.slice(d.indexOf(',') + 1) });
+      };
+      img.onerror = function () { URL.revokeObjectURL(url); no(new Error('foto non leggibile')); };
+      img.src = url;
+    });
+  }
+  async function daFoto(task, file, extra) {
+    if (!disponibile() || !file) return null;
+    extra = extra || {};
+    try {
+      var im = await fotoInBase64(file, extra.lato);
+      var r = await SuiteSync.api('/functions/v1/suite-ai', {
+        method: 'POST',
+        json: { task: task, testo: extra.testo || '', opzioni: extra.opzioni || [], contesto: extra.contesto || {}, immagine: im }
+      });
+      return r && r.ok ? r.dati : null;
+    } catch (e) {
+      if (e && (e.status === 404 || e.status === 401 || e.status === 403)) spento = true;
+      return null;
+    }
+  }
+
   window.SuiteAI = {
     disponibile: disponibile,
     ask: ask,
     scegli: scegli,
+    daFoto: daFoto,
+    fotoInBase64: fotoInBase64,
     /* Frase libera → movimento. Torna null se non ha capito l'importo. */
     movimento: async function (frase, opts) {
       var d = await ask('movimento', frase, opts || {});
       if (!d || !(Number(d.importo) > 0)) return null;
       return d;
+    },
+    /* Numeri → un paragrafo in italiano. Il contesto lo prepara l'app. */
+    riepilogo: async function (contesto, domanda) {
+      var d = await ask('riepilogo', domanda || 'Spiegami com\u2019\u00e8 andata.', { contesto: contesto });
+      if (!d || !d.testo) return null;
+      return { testo: String(d.testo), punti: Array.isArray(d.punti) ? d.punti.map(String).slice(0, 5) : [] };
+    },
+
+    /* ---------- Componenti pronti ----------
+       Due pezzi di interfaccia uguali in tutte le app, così ogni punto nuovo
+       costa poche righe e si comporta sempre allo stesso modo. */
+
+    /* Riga "scrivilo a parole": campo + pulsante. onDati riceve la risposta. */
+    riga: function (opts) {
+      var o = opts || {};
+      var wrap = document.createElement('div');
+      wrap.className = 'ai-row';
+      wrap.innerHTML =
+        '<div class="ai-row-input"><input type="text" class="text-input ai-input" autocomplete="off" enterkeyhint="go">' +
+        '<button type="button" class="ai-go" aria-label="Leggi la frase">\u2728</button></div>' +
+        '<small class="field-hint ai-hint"></small>';
+      var inp = wrap.querySelector('.ai-input'), btn = wrap.querySelector('.ai-go'), hint = wrap.querySelector('.ai-hint');
+      inp.placeholder = o.placeholder || 'Scrivilo a parole\u2026';
+      hint.textContent = o.hint || '';
+      var busy = false;
+      async function vai() {
+        var t = inp.value.trim();
+        if (!t) { inp.focus(); return; }
+        if (busy) return;
+        busy = true; btn.disabled = true; hint.textContent = o.attesa || 'Sto leggendo\u2026';
+        var d = await ask(o.task, t, { opzioni: o.opzioni ? o.opzioni() : [], contesto: o.contesto ? o.contesto() : {} });
+        busy = false; btn.disabled = false;
+        if (!wrap.isConnected) return;
+        var esito = o.onDati ? o.onDati(d) : null;
+        hint.textContent = esito || (d ? (o.fatto || 'Fatto: controlla e salva.') : (o.niente || 'Non ho capito: scrivilo a mano.'));
+        if (d) inp.value = '';
+      }
+      btn.addEventListener('click', vai);
+      inp.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); vai(); } });
+      wrap.setHint = function (t) { hint.textContent = t; };
+      return wrap;
+    },
+
+    /* Pulsante "dalla foto": apre fotocamera o galleria e manda lo scatto. */
+    pulsanteFoto: function (opts) {
+      var o = opts || {};
+      var wrap = document.createElement('div');
+      wrap.className = 'ai-photo';
+      wrap.innerHTML =
+        '<button type="button" class="pill-btn ai-shot">' + (o.etichetta || '\ud83d\udcf7 Dalla foto') + '</button>' +
+        '<input type="file" accept="image/*" capture="environment" hidden class="ai-cam">' +
+        '<input type="file" accept="image/*" hidden class="ai-gal">' +
+        '<button type="button" class="pill-btn ai-pick">\ud83d\uddbc\ufe0f Galleria</button>' +
+        '<small class="field-hint ai-hint"></small>';
+      var shot = wrap.querySelector('.ai-shot'), pick = wrap.querySelector('.ai-pick');
+      var cam = wrap.querySelector('.ai-cam'), gal = wrap.querySelector('.ai-gal'), hint = wrap.querySelector('.ai-hint');
+      shot.addEventListener('click', function () { cam.click(); });
+      pick.addEventListener('click', function () { gal.click(); });
+      async function leggi(input) {
+        var f = input.files && input.files[0]; input.value = '';
+        if (!f) return;
+        shot.disabled = pick.disabled = true;
+        hint.textContent = o.attesa || 'Sto leggendo la foto\u2026';
+        var d = await daFoto(o.task, f, { contesto: o.contesto ? o.contesto() : {}, opzioni: o.opzioni ? o.opzioni() : [], lato: o.lato });
+        shot.disabled = pick.disabled = false;
+        if (!wrap.isConnected) return;
+        var esito = o.onDati ? o.onDati(d, f) : null;
+        hint.textContent = esito || (d ? (o.fatto || 'Fatto: controlla e salva.') : (o.niente || 'Non sono riuscito a leggere la foto.'));
+      }
+      cam.addEventListener('change', function () { leggi(cam); });
+      gal.addEventListener('change', function () { leggi(gal); });
+      wrap.setHint = function (t) { hint.textContent = t; };
+      return wrap;
     }
   };
 })();

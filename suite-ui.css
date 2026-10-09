@@ -504,3 +504,79 @@ html.suite-locked {
   font-size: var(--suite-fs-xs);
   opacity: .75;
 }
+
+/* ---- Pezzi dell'AI: riga "scrivilo a parole" e pulsanti "dalla foto" ---- */
+.ai-row {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.ai-row-input {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.ai-row .ai-input {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.ai-row .ai-go {
+  flex: 0 0 auto;
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--suite-accent-select) 45%, transparent);
+  border-radius: 13px;
+  background: color-mix(in srgb, var(--suite-accent-select) 16%, transparent);
+  color: var(--suite-accent-select);
+  font: inherit;
+  font-size: var(--suite-fs-lg);
+  line-height: 1;
+}
+.ai-row .ai-go:disabled {
+  opacity: .5;
+}
+.ai-photo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 7px;
+}
+.ai-photo .ai-hint,
+.ai-row .ai-hint {
+  flex: 1 1 100%;
+  margin: 0;
+  min-height: 1.3em;
+  font-size: var(--suite-fs-xs);
+  color: var(--suite-text-soft, inherit);
+}
+.ai-photo .pill-btn {
+  flex: 0 0 auto;
+}
+/* Riquadro del riepilogo scritto dall'AI */
+.ai-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.ai-summary p {
+  margin: 0;
+  font-size: var(--suite-fs-sm);
+  line-height: 1.5;
+}
+.ai-summary ul {
+  margin: 0;
+  padding-left: 17px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.ai-summary li {
+  font-size: var(--suite-fs-xs);
+  line-height: 1.45;
+}
+.ai-summary .ai-note {
+  font-size: var(--suite-fs-xs);
+  opacity: .7;
+}

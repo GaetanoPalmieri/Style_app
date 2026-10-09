@@ -10,10 +10,22 @@ Nella funzione invece vive nei Secrets di Supabase e non esce mai dal server.
 
 
 1) PRENDI LA CHIAVE
-   - Vai su console.anthropic.com, Settings > API keys, "Create key".
-   - Copiala: la vedrai una volta sola.
-   - Metti un tetto di spesa mensile (Billing > Limits): per uso personale bastano
-     pochi euro al mese.
+   - Vai su  platform.claude.com  (il vecchio console.anthropic.com porta li').
+   - Accedi con la tua email. E' un account separato dall'abbonamento di Claude:
+     l'uso dell'API si paga a parte, quindi serve caricare un credito
+     (Billing / Fatturazione > aggiungi credito). Per queste app bastano 5 euro
+     e durano mesi.
+   - Settings (Impostazioni) > API keys > "Create key".
+     In alternativa: la voce "API keys" nella colonna di sinistra.
+   - Dai un nome alla chiave (es. "suite app"), scegli una scadenza e conferma.
+   - COPIALA SUBITO: viene mostrata una volta sola e non e' piu' recuperabile.
+     Se la perdi, si revoca e se ne crea un'altra.
+   - Inizia con  sk-ant-  seguito da una lunga sequenza di lettere e numeri.
+   - Metti un tetto di spesa mensile (Billing > Limits): e' la rete di sicurezza
+     se qualcosa chiama la funzione piu' del previsto.
+   - La chiave non va mai incollata dentro le app: solo nei Secrets di Supabase
+     (passo 2). Chiunque apra il codice di una pagina web vedrebbe quello che c'e'
+     dentro.
 
 2) METTI LA CHIAVE SU SUPABASE
    - Supabase > il tuo progetto > Edge Functions > Secrets > "Add new secret".
@@ -34,13 +46,42 @@ Nella funzione invece vive nei Secrets di Supabase e non esce mai dal server.
      app continuano con le regole scritte a mano, senza errori.
 
 COSA FA OGGI
-   - Bilancio, pannello "Nuovo movimento": il campo in alto "es. 35 euro spesa alla
-     Coop ieri". Scrivi o detta la frase, tocca la stellina e importo, data, conto e
-     categoria si riempiono da soli. Controlli e salvi.
-   - Bilancio: quando il nome del movimento non assomiglia a niente di gia' visto,
-     la categoria la sceglie il modello invece di lasciare il campo vuoto.
-   - Noi Due: i prodotti finiti in "Altro" vengono rimessi nel reparto giusto quando
-     apri la lista. Si prova una volta sola per prodotto.
+
+  BILANCIO
+   - Nuovo movimento > campo in alto: "35 euro spesa alla Coop ieri" diventa un
+     movimento gia compilato (tipo, importo, data, conto, categoria).
+   - Nuovo movimento > "Leggi lo scontrino": fotografi lo scontrino e riempie
+     importo, negozio, data, categoria; le voci finiscono nelle note.
+   - Nuovo ricorrente > campo in alto: "ogni 5 del mese 12 euro Netflix" compila
+     importo, cadenza, giorno, conto e categoria.
+   - Categoria: quando il nome non assomiglia a niente di gia' visto, la sceglie
+     il modello invece di lasciare il campo vuoto.
+   - Home > "Com'e' andato il mese" > Spiegamelo: due righe sui tuoi numeri del
+     mese, con i punti che meritano attenzione.
+
+  NOI DUE
+   - Lista > "Incolla lista" > "Leggi la frase": "servono latte, due pacchi di
+     pasta e il detersivo" diventa un elenco con quantita' e reparto.
+   - Lista > "Scontrino": fotografi lo scontrino e le voci entrano in lista gia'
+     spuntate, con il prezzo di riga.
+   - Reparti: i prodotti finiti in "Altro" vengono rimessi al posto giusto
+     quando apri la lista.
+   - Coppia > "Com'e' andato il mese" > Spiegamelo: chi ha pagato cosa, come
+     siete messi, cosa e' cambiato.
+
+  RECOMPAPP
+   - Allenamento > "Scrivilo a parole": "panca 4x8 a 60, croci 3x12 a 14"
+     riempie carichi e ripetizioni degli esercizi di oggi. Non tocca quello che
+     hai gia' scritto.
+   - Altro > "Alimento dall'etichetta": fotografi la tabella nutrizionale e
+     l'alimento entra nel tuo elenco con i valori per 100 g.
+
+  STYLE WISHLIST
+   - Nuovo articolo o nuovo capo: alla prima foto, se il nome e' vuoto, vengono
+     compilati nome, categoria, colore, stagione e tag guardando lo scatto.
+
+  BET TRACKER
+   - Niente. Analisi dei propri dati si potrebbe fare, pronostici no.
 
 QUANTO COSTA
    - Ogni richiesta e' poche centinaia di parole: con il modello piu' piccolo si parla
