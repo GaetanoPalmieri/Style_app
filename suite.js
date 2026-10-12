@@ -1151,50 +1151,6 @@ function bindLongPress(el,handler){
 (function () {
   var cache = {};           /* stesse domande nella stessa sessione: una sola chiamata */
   var spento = false;       /* se la funzione non c'è, smettiamo di riprovare */
-  var ultimoErrore = null;  /* perché l'ultima chiamata non ha portato dati (si mostra all'utente) */
-
-  /* Numeri scritti in tutti i modi: 35 · "35,50" · "€ 1.234,56" · "1,234.56" · "12 euro" */
-  function numero(v) {
-    if (typeof v === 'number') return isFinite(v) ? v : NaN;
-    if (v == null) return NaN;
-    var t = String(v).replace(/[^0-9,.\-]/g, '');
-    if (!t) return NaN;
-    var c = t.lastIndexOf(','), d = t.lastIndexOf('.');
-    if (c >= 0 && d >= 0) t = c > d ? t.replace(/\./g, '').replace(',', '.') : t.replace(/,/g, '');
-    else if (c >= 0) t = /,\d{3}$/.test(t) && t.split(',').length > 2 ? t.replace(/,/g, '') : t.replace(',', '.');
-    else if (d >= 0 && t.split('.').length > 2) t = t.replace(/\.(?=\d{3}(\.|$))/g, '');
-    else if (d >= 0 && /^-?\d{1,3}\.\d{3}$/.test(t)) t = t.replace('.', '');
-    var n = parseFloat(t);
-    return isFinite(n) ? Math.round(n * 100) / 100 : NaN;
-  }
-  /* La funzione può rispondere {ok, dati} oppure direttamente con i dati: accettiamo entrambi. */
-  function estrai(r) {
-    if (!r) return null;
-    if (typeof r === 'string') { try { r = JSON.parse(r); } catch (e) { ultimoErrore = { messaggio: 'risposta non leggibile' }; return null; } }
-    if (r.ok === false) { ultimoErrore = { messaggio: String(r.errore || r.error || r.messaggio || 'la funzione ha risposto con un errore').slice(0, 160) }; return null; }
-    var d = r.dati || r.data || r.risultato || r.result || null;
-    if (!d && typeof r === 'object' && r.ok === undefined) d = r;
-    if (typeof d === 'string') { try { d = JSON.parse(d.replace(/^```(json)?|```$/g, '')); } catch (e) { d = null; } }
-    if (!d || typeof d !== 'object') { ultimoErrore = { messaggio: 'risposta vuota' }; return null; }
-    ultimoErrore = null;
-    return d;
-  }
-  function erroreDa(e) {
-    var st = e && e.status;
-    /* la funzione suite-ai spiega il problema nel campo "error": lo mostriamo così com'è */
-    var m = e && e.message && /"error"\s*:\s*"([^"]+)"/.exec(e.message);
-    if (m) { ultimoErrore = { status: st || 0, messaggio: m[1] }; return; }
-    var msg = st === 404 ? 'la funzione suite-ai non è pubblicata su Supabase'
-      : st === 401 ? 'accesso scaduto: rientra in Altro › Sincronizzazione'
-      : st === 403 ? 'questa email non è abilitata (SUITE_AI_EMAILS)'
-      : st ? ('errore ' + st + (e.message ? ' · ' + String(e.message).replace(/^Errore \d+:?\s*/, '').slice(0, 120) : ''))
-      : 'rete non raggiungibile';
-    ultimoErrore = { status: st || 0, messaggio: msg };
-  }
-  function messaggioErrore(base) {
-    if (!ultimoErrore) return base;
-    return 'L\u2019AI non ha risposto (' + ultimoErrore.messaggio + ').' + (base ? ' ' + base : '');
-  }
 
   function disponibile() {
     return !spento && !!(window.SuiteSync && SuiteSync.signedIn);
@@ -1203,20 +1159,18 @@ function bindLongPress(el,handler){
     if (!disponibile()) return null;
     extra = extra || {};
     var k = task + '|' + testo + '|' + JSON.stringify(extra.opzioni || '');
-    if (cache[k]) { ultimoErrore = null; return cache[k]; }
-    ultimoErrore = null;
+    if (k in cache) return cache[k];
     try {
       var r = await SuiteSync.api('/functions/v1/suite-ai', {
         method: 'POST',
         json: { task: task, testo: String(testo || ''), opzioni: extra.opzioni || [], contesto: extra.contesto || {} }
       });
-      var dati = estrai(r);
-      if (dati) cache[k] = dati;   /* le risposte vuote non si tengono: un nuovo tentativo riprova davvero */
+      var dati = r && r.ok ? r.dati : null;
+      cache[k] = dati;
       return dati;
     } catch (e) {
-      erroreDa(e);
-      /* 404 = funzione non pubblicata: non insistiamo */
-      if (e && e.status === 404) spento = true;
+      /* 404 = funzione non pubblicata, 401/403 = non abilitata: non insistiamo */
+      if (e && (e.status === 404 || e.status === 401 || e.status === 403)) spento = true;
       return null;
     }
   }
@@ -1255,15 +1209,13 @@ function bindLongPress(el,handler){
     extra = extra || {};
     try {
       var im = await fotoInBase64(file, extra.lato);
-      ultimoErrore = null;
       var r = await SuiteSync.api('/functions/v1/suite-ai', {
         method: 'POST',
         json: { task: task, testo: extra.testo || '', opzioni: extra.opzioni || [], contesto: extra.contesto || {}, immagine: im }
       });
-      return estrai(r);
+      return r && r.ok ? r.dati : null;
     } catch (e) {
-      erroreDa(e);
-      if (e && e.status === 404) spento = true;
+      if (e && (e.status === 404 || e.status === 401 || e.status === 403)) spento = true;
       return null;
     }
   }
@@ -1274,23 +1226,10 @@ function bindLongPress(el,handler){
     scegli: scegli,
     daFoto: daFoto,
     fotoInBase64: fotoInBase64,
-    numero: numero,
-    messaggioErrore: messaggioErrore,
-    get ultimoErrore() { return ultimoErrore; },
-    /* Importo da una risposta, qualunque nome abbia il campo e comunque sia scritto. */
-    importoDa: function (d, campi) {
-      if (!d) return NaN;
-      var lista = campi || ['importo', 'totale', 'amount', 'total', 'cifra', 'prezzo'];
-      for (var i = 0; i < lista.length; i++) { var n = numero(d[lista[i]]); if (n > 0) return n; }
-      return NaN;
-    },
     /* Frase libera → movimento. Torna null se non ha capito l'importo. */
     movimento: async function (frase, opts) {
       var d = await ask('movimento', frase, opts || {});
-      if (!d) return null;
-      var n = window.SuiteAI.importoDa(d);
-      if (!(n > 0)) { if (!ultimoErrore) ultimoErrore = null; return null; }
-      d.importo = n;
+      if (!d || !(Number(d.importo) > 0)) return null;
       return d;
     },
     /* Numeri → un paragrafo in italiano. Il contesto lo prepara l'app. */
@@ -1326,9 +1265,8 @@ function bindLongPress(el,handler){
         busy = false; btn.disabled = false;
         if (!wrap.isConnected) return;
         var esito = o.onDati ? o.onDati(d) : null;
-        hint.textContent = (!d && ultimoErrore) ? messaggioErrore('Puoi scriverlo a mano qui sotto.')
-          : (esito || (d ? (o.fatto || 'Fatto: controlla e salva.') : (o.niente || 'Non ho capito: scrivilo a mano.')));
-        if (d && !esito) inp.value = '';
+        hint.textContent = esito || (d ? (o.fatto || 'Fatto: controlla e salva.') : (o.niente || 'Non ho capito: scrivilo a mano.'));
+        if (d) inp.value = '';
       }
       btn.addEventListener('click', vai);
       inp.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); vai(); } });
@@ -1360,8 +1298,7 @@ function bindLongPress(el,handler){
         shot.disabled = pick.disabled = false;
         if (!wrap.isConnected) return;
         var esito = o.onDati ? o.onDati(d, f) : null;
-        hint.textContent = (!d && ultimoErrore) ? messaggioErrore('Puoi scriverlo a mano.')
-          : (esito || (d ? (o.fatto || 'Fatto: controlla e salva.') : (o.niente || 'Non sono riuscito a leggere la foto.')));
+        hint.textContent = esito || (d ? (o.fatto || 'Fatto: controlla e salva.') : (o.niente || 'Non sono riuscito a leggere la foto.'));
       }
       cam.addEventListener('change', function () { leggi(cam); });
       gal.addEventListener('change', function () { leggi(gal); });
@@ -1369,4 +1306,100 @@ function bindLongPress(el,handler){
       return wrap;
     }
   };
+})();
+
+/* ===================== SuiteIcons — pulsanti d'azione come icone (tutte le app) =====================
+   Salva / Conferma / Fatto → spunta · Elimina / Rimuovi → cestino · Modifica → matita
+   Annulla / Chiudi → X (nei messaggi in basso "Annulla" = freccia indietro) · Duplica → due fogli
+   Aggiungi → +.
+   Lavora da solo: guarda i pulsanti che compaiono nella pagina e, se il testo è una di queste
+   azioni, lo sostituisce con l'icona. Il testo resta come aria-label e title (lettore vocale,
+   pressione lunga sul computer). Se il codice di un'app riscrive il testo del pulsante,
+   l'icona viene rimessa da sola. Per tenere un pulsante a parole: data-no-icon. */
+(function () {
+  if (window.SuiteIcons) return;
+  var P = '<svg class="suite-ic" viewBox="0 0 24 24" aria-hidden="true" focusable="false">';
+  var ICONS = {
+    check: P + '<path d="M4.5 12.5l5 5L19.5 7"/></svg>',
+    trash: P + '<path d="M4 7h16"/><path d="M9.5 7V4.8c0-.4.4-.8.8-.8h3.4c.4 0 .8.4.8.8V7"/><path d="M6.5 7l.9 12.2c.1 1 .9 1.8 1.9 1.8h5.4c1 0 1.8-.8 1.9-1.8L17.5 7"/><path d="M10 11v6M14 11v6"/></svg>',
+    edit: P + '<path d="M4 20h4.2L19 9.2a2.1 2.1 0 0 0 0-3L17.8 5a2.1 2.1 0 0 0-3 0L4 15.8V20z"/><path d="M13.5 6.5l4 4"/></svg>',
+    close: P + '<path d="M6 6l12 12M18 6L6 18"/></svg>',
+    undo: P + '<path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg>',
+    copy: P + '<rect x="8.5" y="8.5" width="11.5" height="11.5" rx="2.2"/><path d="M15.5 8.5V6.2c0-1.2-1-2.2-2.2-2.2H6.2C5 4 4 5 4 6.2v7.1c0 1.2 1 2.2 2.2 2.2h2.3"/></svg>',
+    plus: P + '<path d="M12 5v14M5 12h14"/></svg>'
+  };
+  /* Ordine importante: la prima regola che corrisponde vince. */
+  var RULES = [
+    [/^(elimina|rimuovi)\b(?!.*\btutt[ie]\b)/i, 'trash'],
+    [/^🗑️?$/, 'trash'],
+    [/^modifica\b/i, 'edit'],
+    [/^✎︎?️?$/, 'edit'],
+    [/^(salva|conferma|fatto|ok)\b/i, 'check'],
+    [/^sì, /i, 'check'],
+    [/^(annulla|chiudi)$/i, 'close'],
+    [/^duplica$/i, 'copy'],
+    [/^aggiungi$/i, 'plus']
+  ];
+  var SKIP = '[data-no-icon],.movement-action-menu,.movement-action-buttons,#lpPopup,.lp-popup,[role="menu"],.period-menu,.type-toggle,.type-opt,select,option';
+  var TOAST = '[id*="oast"],[class*="toast"],[class*="Toast"],[class*="snack"]';
+
+  function labelOf(btn) {
+    for (var i = 0; i < btn.childNodes.length; i++) {
+      var n = btn.childNodes[i];
+      if (n.nodeType === 1 && (n.children.length || !/^(SPAN|B|STRONG)$/.test(n.tagName))) return null;
+    }
+    return (btn.textContent || '').replace(/\s+/g, ' ').trim();
+  }
+  function iconFor(text) {
+    /* toglie simboli in testa (✓ ✎ 🗑 ✕ …) ma non le lettere */
+    var t = text.replace(/^[^\p{L}\p{N}]+(?=\p{L})/u, '').replace(/\s*[›»]$/, '');
+    for (var i = 0; i < RULES.length; i++) if (RULES[i][0].test(t) || RULES[i][0].test(text)) return RULES[i][1];
+    return null;
+  }
+  function apply(btn) {
+    if (!btn || btn.nodeType !== 1 || btn.tagName !== 'BUTTON') return;
+    if (btn.querySelector('svg.suite-ic')) return;
+    if (btn.closest(SKIP)) return;
+    var text = labelOf(btn);
+    if (!text || text.length > 40) return;
+    var kind = iconFor(text);
+    if (!kind) return;
+    if (kind === 'close' && /^annulla$/i.test(text) && btn.closest(TOAST)) kind = 'undo';
+    btn.innerHTML = ICONS[kind];
+    btn.classList.add('suite-ic-btn', 'suite-ic-' + kind);
+    var aria = btn.getAttribute('aria-label');
+    if (!aria || btn.dataset.icAria === aria) { btn.setAttribute('aria-label', text); btn.dataset.icAria = text; }
+    if (!btn.title) btn.title = text;
+  }
+  function scan(root) {
+    if (!root || !root.querySelectorAll) return;
+    if (root.tagName === 'BUTTON') apply(root);
+    var list = root.querySelectorAll('button');
+    for (var i = 0; i < list.length; i++) apply(list[i]);
+  }
+  var pending = new Set(), scheduled = false;
+  function flush() {
+    scheduled = false;
+    pending.forEach(function (el) { if (el.isConnected) scan(el); });
+    pending.clear();
+  }
+  function queue(el) {
+    if (!el) return;
+    pending.add(el);
+    if (!scheduled) { scheduled = true; (window.queueMicrotask || setTimeout)(flush); }
+  }
+  function start() {
+    scan(document.body);
+    new MutationObserver(function (muts) {
+      for (var i = 0; i < muts.length; i++) {
+        var m = muts[i], t = m.target;
+        if (m.type === 'characterData') { t = t.parentElement; if (t) queue(t.closest('button') || t); continue; }
+        if (t.nodeType === 1 && t.tagName === 'BUTTON') { queue(t); continue; }
+        if (t.nodeType === 1 && t.closest && t.closest('button')) { queue(t.closest('button')); continue; }
+        for (var j = 0; j < m.addedNodes.length; j++) { var n = m.addedNodes[j]; if (n.nodeType === 1) queue(n); }
+      }
+    }).observe(document.body, { childList: true, subtree: true, characterData: true });
+  }
+  window.SuiteIcons = { apply: apply, scan: scan, icons: ICONS };
+  if (document.body) start(); else document.addEventListener('DOMContentLoaded', start);
 })();
